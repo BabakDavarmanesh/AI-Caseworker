@@ -33,7 +33,7 @@ Sample files: `client_intake_questions_reordered.pdf` (intake form) and `Specime
 
 1. The question is spoken in the interview language (Gemini-TTS, or Lisa's voice in the Virtual Caseworker).
 2. The client answers by voice. **Gemini Live** transcribes speech and detects the end of each sentence (about 0.5 s).
-3. Answers in Persian/French, or text that does not look like English, are re-transcribed from the recording by Gemini, so English names, numbers and postal codes are written correctly (e.g. `945 Marine Drive`, `V7T 1A8`).
+3. Answers in Persian/French, or text that does not look like English, are re-transcribed from the recording by Gemini, so English names, numbers and postal codes are written correctly (e.g. `999 Marine Drive`, `X7A 1A1`).
 4. **Guardrails** reject out-of-scope requests (chances of PR, advice, off-topic chat) without counting them as answers.
 5. **Gemini analyzes** the answer against the question's validation rules (required date parts, numbers, choices, address components). Impossible values such as a future date of birth or 31 February are rejected. Missing information leads to a targeted follow-up (at most 3).
 6. The understood answer is **read back** ("I have the date as 24 August 1983. Is that correct?"). It is saved only after the client says yes; "no" lets the client correct it. Names are spelled back letter by letter. Name, country of birth and address use a dedicated step-by-step workflow (`intake-rules.json`).
