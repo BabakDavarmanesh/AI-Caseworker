@@ -1792,3 +1792,37 @@ body { font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   object-fit: contain !important;
   background: #fff;
 }
+
+
+/* =============================================================
+   SIDEBAR LOGO — matches landing page brand mark
+   Applies to all pages that use .logo-icon in the sidebar.
+   ============================================================= */
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #059669 0%, #0284c7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+  position: relative;
+}
+
+.logo-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.logo-icon svg circle {
+  fill: rgba(255, 255, 255, 0.25);
+  stroke: #ffffff;
+}
