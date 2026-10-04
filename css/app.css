@@ -1826,3 +1826,122 @@ body { font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   fill: rgba(255, 255, 255, 0.25);
   stroke: #ffffff;
 }
+
+/* =============================================================
+   QUESTION ENGINE — RESTORED HERO UPLOAD + PIPELINE CONNECTOR
+   Appended to override the reverted base rules. Safe to keep at
+   the end of the file; nothing above is modified.
+   ============================================================= */
+
+/* Hero upload zone */
+.upload-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 56px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: linear-gradient(180deg, #fafbff 0%, #f4f7ff 100%);
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.upload-zone:hover {
+  border-color: var(--primary);
+  background: linear-gradient(180deg, #f0f6ff 0%, #e6efff 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px -8px rgba(37, 99, 235, 0.18);
+}
+
+.upload-zone.drag-over {
+  border-color: var(--primary);
+  background: linear-gradient(180deg, #e6efff 0%, #dbeafe 100%);
+  transform: scale(1.01);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12), 0 12px 32px -8px rgba(37, 99, 235, 0.25);
+  animation: uploadPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes uploadPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12), 0 12px 32px -8px rgba(37, 99, 235, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.06), 0 12px 32px -8px rgba(37, 99, 235, 0.35);
+  }
+}
+
+.upload-icon {
+  font-size: 52px;
+  margin-bottom: 14px;
+  display: block;
+  line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(37, 99, 235, 0.15));
+}
+
+.upload-zone:hover .upload-icon {
+  transform: translateY(-3px);
+  transition: transform 0.25s ease;
+}
+
+.upload-zone .upload-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.upload-zone .upload-title strong {
+  color: var(--primary);
+}
+
+.upload-zone .upload-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
+
+.upload-zone input[type=file] {
+  display: none;
+}
+
+/* Pipeline connector alignment fix */
+.pipeline-connector {
+  position: relative;
+  flex: 1 1 78px;
+  min-width: 58px;
+  height: 3px;
+  align-self: flex-start;
+  margin-top: 26px;
+  margin-left: -5px;
+  margin-right: -5px;
+  margin-bottom: 0;
+  background: #e1e7f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.pipeline-connector span {
+  position: absolute;
+  inset: 0;
+  transform: translateX(-102%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, #79a7ff, #6d5dfc, #79a7ff);
+}
+
+.pipeline-step.step-active + .pipeline-connector span {
+  animation: connector-flow 1.2s linear infinite;
+}
+
+.pipeline-step.step-done + .pipeline-connector {
+  background: #b7e8d1;
+}
+
+.pipeline-step.step-done + .pipeline-connector span {
+  transform: translateX(0);
+  background: #63c99a;
+}
+
+@keyframes connector-flow {
+  0%   { transform: translateX(-102%); }
+  100% { transform: translateX(102%); }
+}
