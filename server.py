@@ -10,6 +10,7 @@ import time
 import shutil
 import subprocess
 import threading
+import base64
 
 ROOT = Path(__file__).resolve().parent
 CONFIG_PATH = ROOT / "config.js"
@@ -19,10 +20,11 @@ PORT = 5512
 
 ALLOWED_KEYS = {
     "gcpProjectId", "gcpLocation", "gcpProcessorId", "gcpCredentialsFile",
-    "oaiEndpoint", "oaiKey", "oaiDeployment",
-    "oaiApiVersion", "oaiBaseUrl", "ttsDeployment", "ttsVoice",
+    "geminiModel", "geminiLocation",
+    "voiceProvider", "googleTtsModel", "googleTtsVoice",
     "speechRegion", "speechKey", "speechVoice",
-    "avatarResourceName", "avatarEndpoint", "avatarRegion", "avatarKey", "avatarCharacter", "avatarStyle", "avatarVoice"
+    "avatarResourceName", "avatarEndpoint", "avatarRegion", "avatarKey", "avatarCharacter", "avatarStyle", "avatarVoice",
+    "avatarProvider", "geminiAvatarName", "geminiAvatarVoice", "geminiLiveModel", "geminiLiveLocation"
 }
 
 def _load_clients():
@@ -198,6 +200,173 @@ def _google_docai_process(data):
     return {"ok": True, "text": text, "pages": pages}
 
 
+# ─── Gemini on Vertex AI ───────────────────────────────────
+MAX_GEMINI_BODY = 8 * 1024 * 1024
+
+
+def _gemini_vertex(data):
+    """Returns (http_status, json_payload) from Vertex AI generateContent."""
+    project = str(data.get("projectId", "")).strip()
+    location = str(data.get("location", "global")).strip() or "global"
+    model = str(data.get("model", "gemini-3.8-flash")).strip() or "gemini-3.8-flash"
+    if not re.fullmatch(r"[a-z0-9-]{4,63}", project or ""):
+        raise ValueError("Invalid Google Project ID")
+    if not re.fullmatch(r"[a-z0-9-]{2,40}", location):
+        raise ValueError("Invalid Vertex AI location")
+    if not re.fullmatch(r"[A-Za-z0-9._-]{3,80}", model):
+        raise ValueError("Invalid Gemini model name")
+    body = data.get("request")
+    if not isinstance(body, dict) or not body.get("contents"):
+        raise ValueError("request.contents is required")
+
+    host = "aiplatform.googleapis.com" if location == "global" else f"{location}-aiplatform.googleapis.com"
+    url = (f"https://{host}/v1/projects/{project}/locations/{location}"
+           f"/publishers/google/models/{model}:generateContent")
+
+    token, _ = _get_google_token(data.get("credentialsFile", ""))
+    req = urllib.request.Request(
+        url, method="POST", data=json.dumps(body).encode("utf-8"),
+        headers={"Authorization": f"Bearer {token}",
+                 "Content-Type": "application/json; charset=utf-8",
+                 "x-goog-user-project": project})
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            return 200, json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        try:
+            payload = json.loads(detail)
+            if isinstance(payload, list) and payload:
+                payload = payload[0]
+            if not isinstance(payload, dict):
+                raise ValueError
+        except Exception:
+            payload = {"error": {"message": detail[:400]}}
+        return exc.code, payload
+
+
+# ─── Google Gemini-TTS (Cloud Text-to-Speech) ──────────────
+def _google_tts(data):
+    """Returns (http_status, json_payload). Success payload: {"audioContent": "<base64 mp3>"}."""
+    project = str(data.get("projectId", "")).strip()
+    model = str(data.get("model", "gemini-2.5-flash-tts")).strip() or "gemini-2.5-flash-tts"
+    voice = str(data.get("voiceName", "Kore")).strip() or "Kore"
+    lang = str(data.get("languageCode", "en-US")).strip() or "en-US"
+    text = str(data.get("text", "")).strip()
+    prompt = str(data.get("prompt", "")).strip()
+    if not re.fullmatch(r"[a-z0-9-]{4,63}", project or ""):
+        raise ValueError("Invalid Google Project ID")
+    if not re.fullmatch(r"[A-Za-z0-9._-]{3,80}", model):
+        raise ValueError("Invalid voice model")
+    if not re.fullmatch(r"[A-Za-z0-9-]{2,40}", voice):
+        raise ValueError("Invalid voice name")
+    if not re.fullmatch(r"[A-Za-z0-9-]{2,12}", lang):
+        raise ValueError("Invalid language code")
+    if not text:
+        raise ValueError("text is required")
+    if len(text.encode("utf-8")) > 4000:
+        text = text.encode("utf-8")[:4000].decode("utf-8", errors="ignore")
+
+    body = {
+        "input": {"text": text},
+        "voice": {"languageCode": lang, "name": voice, "model_name": model},
+        "audioConfig": {"audioEncoding": "MP3"},
+    }
+    if prompt:
+        body["input"]["prompt"] = prompt[:1000]
+
+    token, _ = _get_google_token(data.get("credentialsFile", ""))
+    req = urllib.request.Request(
+        "https://texttospeech.googleapis.com/v1/text:synthesize",
+        method="POST", data=json.dumps(body).encode("utf-8"),
+        headers={"Authorization": f"Bearer {token}",
+                 "Content-Type": "application/json; charset=utf-8",
+                 "x-goog-user-project": project})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            out = json.loads(resp.read().decode("utf-8"))
+            return 200, {"audioContent": out.get("audioContent", "")}
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        try:
+            payload = json.loads(detail)
+            if isinstance(payload, list) and payload:
+                payload = payload[0]
+            if not isinstance(payload, dict):
+                raise ValueError
+        except Exception:
+            payload = {"error": {"message": detail[:400]}}
+        return exc.code, payload
+
+
+# ─── Streaming Gemini-TTS (Vertex AI streamGenerateContent) ─
+# The Cloud TTS endpoint above returns audio only after the whole clip is made
+# (3–17 s). Streaming yields the first audio after ~0.7 s; the handler forwards
+# it to the browser as raw 16-bit PCM, 24 kHz mono, chunk by chunk.
+TTS_STREAM_RATE = 24000
+
+
+def _google_tts_stream_request(data):
+    """Validates input and opens the Vertex AI SSE stream. Returns the response."""
+    project = str(data.get("projectId", "")).strip()
+    model = str(data.get("model", "gemini-2.5-flash-tts")).strip() or "gemini-2.5-flash-tts"
+    voice = str(data.get("voiceName", "Kore")).strip() or "Kore"
+    lang = str(data.get("languageCode", "en-US")).strip() or "en-US"
+    text = str(data.get("text", "")).strip()
+    style = str(data.get("prompt", "")).strip()
+    if not re.fullmatch(r"[a-z0-9-]{4,63}", project or ""):
+        raise ValueError("Invalid Google Project ID")
+    if not re.fullmatch(r"[A-Za-z0-9._-]{3,80}", model):
+        raise ValueError("Invalid voice model")
+    if not re.fullmatch(r"[A-Za-z0-9-]{2,40}", voice):
+        raise ValueError("Invalid voice name")
+    if not re.fullmatch(r"[A-Za-z0-9-]{2,12}", lang):
+        raise ValueError("Invalid language code")
+    if not text:
+        raise ValueError("text is required")
+    text = text[:4000]
+    # Gemini-TTS takes the speaking style as a short lead-in ("Say warmly: ...");
+    # it shapes the delivery and is not read aloud.
+    spoken = f"{style[:300].rstrip(' .:')}: {text}" if style else text
+
+    body = {
+        "contents": [{"role": "user", "parts": [{"text": spoken}]}],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {
+                "languageCode": lang,
+                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}},
+            },
+        },
+    }
+    url = ("https://aiplatform.googleapis.com/v1/projects/"
+           f"{project}/locations/global/publishers/google/models/{model}:streamGenerateContent?alt=sse")
+    token, _ = _get_google_token(data.get("credentialsFile", ""))
+    req = urllib.request.Request(
+        url, method="POST", data=json.dumps(body).encode("utf-8"),
+        headers={"Authorization": f"Bearer {token}",
+                 "Content-Type": "application/json; charset=utf-8",
+                 "x-goog-user-project": project})
+    return urllib.request.urlopen(req, timeout=60)
+
+
+def _iter_tts_stream_pcm(resp):
+    """Yields raw PCM byte chunks from a Vertex AI SSE response."""
+    for raw in resp:
+        line = raw.decode("utf-8", errors="replace").strip()
+        if not line.startswith("data:"):
+            continue
+        try:
+            event = json.loads(line[5:])
+        except ValueError:
+            continue
+        for cand in event.get("candidates", []):
+            for part in cand.get("content", {}).get("parts", []):
+                inline = part.get("inlineData")
+                if inline and inline.get("data"):
+                    yield base64.b64decode(inline["data"])
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -299,6 +468,73 @@ class Handler(SimpleHTTPRequestHandler):
                 })
             return
 
+        if url_path == "/google-tts":
+            try:
+                data = self._read_json_body()
+                status, payload = _google_tts(data)
+                self._send_json(status, payload)
+            except ValueError as exc:
+                self._send_json(400, {"error": {"message": str(exc)}})
+            except Exception as exc:
+                self._send_json(502, {"error": {"message": str(exc)}})
+            return
+
+        if url_path == "/google-live-token":
+            # Short-lived OAuth token for the browser's Gemini Live (avatar)
+            # WebSocket. The server only listens on 127.0.0.1.
+            try:
+                data = self._read_json_body()
+                token, _ = _get_google_token(data.get("credentialsFile", ""))
+                expires_in = max(0, int(_token_cache.get("expires", 0) - time.time()))
+                self._send_json(200, {"accessToken": token, "expiresIn": expires_in})
+            except Exception as exc:
+                self._send_json(502, {"error": {"message": str(exc)}})
+            return
+
+        if url_path == "/google-tts-stream":
+            try:
+                data = self._read_json_body()
+                resp = _google_tts_stream_request(data)
+            except ValueError as exc:
+                self._send_json(400, {"error": {"message": str(exc)}})
+                return
+            except urllib.error.HTTPError as exc:
+                detail = exc.read().decode("utf-8", errors="replace")
+                self._send_json(exc.code, {"error": {"message": detail[:400]}})
+                return
+            except Exception as exc:
+                self._send_json(502, {"error": {"message": str(exc)}})
+                return
+
+            # No Content-Length: the body is streamed and the connection closed
+            # at the end (HTTP/1.0 handler).
+            self.send_response(200)
+            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("X-Audio-Format", f"pcm_s16le;rate={TTS_STREAM_RATE};channels=1")
+            self.end_headers()
+            try:
+                with resp:
+                    for chunk in _iter_tts_stream_pcm(resp):
+                        self.wfile.write(chunk)
+                        self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                pass   # browser stopped playback (Stop / new question)
+            except Exception as exc:
+                print("[google-tts-stream] stream error:", exc)
+            self.close_connection = True
+            return
+
+        if url_path == "/gemini":
+            try:
+                data = self._read_json_body(MAX_GEMINI_BODY)
+                status, payload = _gemini_vertex(data)
+                self._send_json(status, payload)
+            except ValueError as exc:
+                self._send_json(400, {"error": {"message": str(exc)}})
+            except Exception as exc:
+                self._send_json(502, {"error": {"message": str(exc)}})
+            return
+
         if url_path == "/google-docai/status":
             try:
                 data = self._read_json_body()
@@ -368,8 +604,8 @@ class Handler(SimpleHTTPRequestHandler):
             # Preserve stable field order for readability.
             ordered_keys = [
                 "gcpProjectId", "gcpLocation", "gcpProcessorId", "gcpCredentialsFile",
-                "oaiEndpoint", "oaiKey", "oaiDeployment",
-                "oaiApiVersion", "oaiBaseUrl", "ttsDeployment", "ttsVoice",
+                "geminiModel", "geminiLocation",
+                "voiceProvider", "googleTtsModel", "googleTtsVoice",
                 "speechRegion", "speechKey", "speechVoice",
                 "avatarResourceName", "avatarEndpoint", "avatarRegion", "avatarKey",
                 "avatarCharacter", "avatarStyle", "avatarVoice"
@@ -422,4 +658,6 @@ if __name__ == "__main__":
     print(f"Mock CRM API running at http://localhost:{PORT}/api/clients")
     print("Save Settings will update config.js in this folder.")
     print("Google Document AI proxy at http://localhost:%d/google-docai" % PORT)
+    print("Gemini (Vertex AI) proxy at http://localhost:%d/gemini" % PORT)
+    print("Gemini voice (Text-to-Speech) proxy at http://localhost:%d/google-tts" % PORT)
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()

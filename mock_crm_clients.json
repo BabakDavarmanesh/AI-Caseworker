@@ -1,0 +1,22 @@
+[
+  {
+    "address1_line1": "Robson Street",
+    "address1_line2": "Suite 402",
+    "address1_city": "Vancouver",
+    "address1_stateorprovince": "British Columbia",
+    "address1_postalcode": "V6B 2B6",
+    "address1_country": "Canada",
+    "firstarrivaldate": "2023-09-12",
+    "familystatuscode": "Married",
+    "numberofchildren": 0,
+    "fullname": "Mona Esrafilzadeh",
+    "crm_metadata": {
+      "source": "AI Caseworker Intake",
+      "status": "Approved",
+      "reviewedBy": "Caseworker",
+      "approvedAt": "2026-10-03T02:06:29.393Z"
+    },
+    "clientId": "CRM-1001",
+    "createdAt": "2026-10-03T02:06:29.446965+00:00"
+  }
+]

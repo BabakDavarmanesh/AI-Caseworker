@@ -1785,3 +1785,10 @@ body { font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   #sec-assistant > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; height: auto !important; }
   #aa-remote-video { min-height: 70vh !important; }
 }
+
+/* Gemini Live avatar: portrait video (704x1280), shown whole instead of cropped (v44) */
+#aa-remote-video video.gemini-avatar,
+#aa-video.gemini-avatar {
+  object-fit: contain !important;
+  background: #fff;
+}
