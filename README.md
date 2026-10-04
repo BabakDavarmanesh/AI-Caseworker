@@ -108,13 +108,6 @@ If no key file is found, the server falls back to `gcloud auth print-access-toke
 | `intake-rules.json` | Fields that use the step-by-step confirmation workflow (full name, country of birth, current address) |
 | `CLIENT-INTAKE-ARCHITECTURE.md` | Notes on the interview turn routing |
 
-## Data and security
-
-- **Never commit `config.js` or `google-service-account.json`.** The key file gives access to the Google Cloud project; this repository is public.
-- Questions, translations, answers and the scanned ID details are stored in the browser (localStorage). The ID image itself is not stored.
-- `mock_crm_clients.json` is written by the server whenever a client is sent to the Mock CRM; keep it empty in the repository.
-- This is a demo setup, not a production architecture.
-
 ## Troubleshooting
 
 - **No sound / interview stays on "Starting…"**: click once on the page (or the ▶ Start button); browsers block audio and microphone processing until the user interacts.
