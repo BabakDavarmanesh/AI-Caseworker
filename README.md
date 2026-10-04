@@ -1,158 +1,123 @@
 # CaseBridge AI
 
-This version intentionally uses the simple browser-based architecture for the hackathon prototype.
+AI-assisted client intake for caseworkers. An intake form is turned into a question bank, the client is interviewed by voice (in their own language, by a caseworker or by a talking avatar), every answer is checked and confirmed with the client, and the approved data is mapped to Dynamics 365 fields and sent to a Mock CRM.
+
+Hackathon prototype: plain HTML/JavaScript pages plus a small Python server. **All AI runs on Google Cloud (Gemini on Vertex AI, Gemini Live, Gemini-TTS, Document AI). No Azure services are used.**
 
 ## Run
-Double-click `start-ai-caseworker.bat`.
 
-Then open **Settings** and enter:
-- Google Document AI: Project ID, Location, Processor ID, and a service-account key file
-- Google Gemini on Vertex AI: model (default `gemini-3.8-flash`) and location (`global`)
-- Azure Speech resource/region/key if using voice/avatar
+1. Put your Google service-account key in this folder as `google-service-account.json` (see *Google Cloud setup*).
+2. Double-click `start-ai-caseworker.bat`. It installs `google-auth` and `requests`, starts `server.py` on port 5512 and opens `http://localhost:5512/index.html`.
+3. Open **Settings**, check the values and click **Save Settings** (they are written to `config.js`).
 
-When you click **Save Settings**, the values are written to `config.js` in this folder.
-The browser also keeps a local copy for the current session.
+Always use the app through `http://localhost:5512/`; opening the HTML files directly does not work. Allow microphone access when the browser asks. If the browser blocks sound, the Virtual Caseworker shows a **▶ Start the interview** button: one click enables sound and the microphone.
 
-If you ZIP and share the whole folder, `config.js` goes with it, so the recipient does not need to re-enter the settings.
+## Pages
 
-The included lightweight `server.py` is only used to serve the existing pages and let the Settings page update `config.js`. No Node backend or Azure Functions are required.
+| Page | File | What it does |
+|---|---|---|
+| Landing page | `index.html` | Product overview and entry point. |
+| Question Engine | `question-engine.html` | Upload an intake form (PDF, Word, Excel, PowerPoint, HTML, images). Document AI extracts the text; Gemini extracts only the questions that are actually in the document. |
+| Question Bank | `question-bank.html` | Review and edit the extracted questions. |
+| Translation Engine | `translation.html` | Translate the questions into interview languages (Persian, French, Arabic, Spanish, …) and edit the translations. |
+| ID Scan | `id-scan.html` | Upload the client's ID (passport, PR card, licence…). Gemini reads name, date of birth, document number, expiry, etc. The name and date of birth are used in Responses and sent to the CRM (`fullname`, `birthdate`). The ID image is never stored. |
+| Client Intake | `interview.html` | Caseworker-led interview. **Play Question** reads the question (Gemini voice), **Speak / Stop** records the answer; analysis starts automatically after Stop. |
+| Virtual Caseworker | `ai-assistant.html` | Fully automatic interview with **Lisa**, a Gemini Live video avatar: she asks each question, listens, asks follow-ups and confirms every answer. |
+| Responses | `responses.html` | All saved answers with English translation and mapping, caseworker review, Dynamics field mapping, approval and sync to the Mock CRM. |
+| Mock CRM | `crm.html` | Client records received from the app (`/api/clients`). |
+| Settings | `settings.html` | Google project, Gemini model, voice and avatar settings. |
+
+Sample files: `client_intake_questions_reordered.pdf` (intake form) and `Specimen_Passport.jpg` (official UK specimen passport, for testing ID Scan).
+
+## How an interview works
+
+1. The question is spoken in the interview language (Gemini-TTS, or Lisa's voice in the Virtual Caseworker).
+2. The client answers by voice. **Gemini Live** transcribes speech and detects the end of each sentence (about 0.5 s).
+3. Answers in Persian/French, or text that does not look like English, are re-transcribed from the recording by Gemini, so English names, numbers and postal codes are written correctly (e.g. `945 Marine Drive`, `V7T 1A8`).
+4. **Guardrails** reject out-of-scope requests (chances of PR, advice, off-topic chat) without counting them as answers.
+5. **Gemini analyzes** the answer against the question's validation rules (required date parts, numbers, choices, address components). Impossible values such as a future date of birth or 31 February are rejected. Missing information leads to a targeted follow-up (at most 3).
+6. The understood answer is **read back** ("I have the date as 24 August 1983. Is that correct?"). It is saved only after the client says yes; "no" lets the client correct it. Names are spelled back letter by letter. Name, country of birth and address use a dedicated step-by-step workflow (`intake-rules.json`).
+7. Saved answers keep the client's words, an English translation and the mapped value; unresolved answers are flagged for caseworker review.
+
+Language: the client can ask to switch language at any time ("می‌تونی فارسی صحبت کنی؟", "speak French"). In Client Intake the language is chosen at the top of the page. Answers are always analyzed and saved in English.
 
 ## Architecture
-Browser -> Azure services directly.
 
-## Security note
-This is a demo-only setup. Keys saved in `config.js` are plain text and are accessible to anyone who receives the folder. Do not publish `config.js` to a public repository or use this architecture for production.
-
-
-## Portable settings
-Run `start-ai-caseworker.bat` and open the app only through `http://localhost:5512/`. The Settings page writes Azure settings to `config.js` when Save Settings is clicked. Do not open the HTML files directly.
-
-
-## Neural voice
-Set Speech Region, Speech API Key, and Speech Voice (for example `en-US-LunaNeural`) in Settings. The Conversation Engine `Play Question` button now prefers Azure Speech Neural TTS and only falls back to the browser voice if Azure Speech is unavailable.
-
-## AI Caseworker Avatar flow (v2 update)
-
-The AI Caseworker page (`ai-assistant.html`) is now the primary client-session flow.
-It loads the current Question Bank and runs the interview automatically:
-
-1. Avatar asks the current question.
-2. Azure Speech continuously listens.
-3. About 1.8 seconds of silence ends the client's turn automatically.
-4. The answer is analyzed by the caseworker reasoning logic.
-5. If information is missing, the avatar asks a targeted follow-up.
-6. After at most 3 follow-ups, unresolved answers are flagged for caseworker review.
-7. Complete answers are saved to Responses and the avatar moves to the next question.
-8. Language-switch commands continue to work during the session.
-
-For real-time Avatar, configure an Azure Speech resource that supports Talking Avatar (Standard S0, supported region), and enter Resource Name, Region, API Key, and voice in Settings.
-
-
-## Separate Speech and Avatar resources
-
-This version intentionally keeps the normal Speech resource and real-time Avatar resource separate.
-
-- Azure Speech (STT + Neural TTS): use your normal Speech resource, e.g. `westus`, F0.
-- Azure Talking Avatar: use the separate S0 resource, e.g. resource name `ai-caseworker-avatar`, region `francecentral`.
-- Avatar defaults: character `lisa`, style `casual-sitting`, voice `en-US-LunaNeural`.
-
-The AI Assistant/Avatar pages use the Avatar resource for WebRTC video/TTS and the normal Speech resource for microphone speech recognition.
-
-
-## Avatar settings
-
-The real-time Avatar uses a separate S0 Speech resource. In Settings enter:
-
-- Avatar Resource Name (for example `ai-caseworker-avatar`)
-- Avatar Endpoint copied from Azure Portal (for example `https://francecentral.api.cognitive.microsoft.com/`)
-- Avatar Region (for example `francecentral`)
-- Avatar API Key
-- Avatar Character (default `lisa`)
-- Avatar Style (default `casual-sitting`)
-- Avatar Voice (default `en-US-LunaNeural`)
-
-The app stores the portal endpoint for configuration clarity. The WebRTC relay token uses the resource-specific Avatar relay endpoint required by Azure.
-
-## Avatar connection note
-The bundled `server.py` now proxies the Azure Talking Avatar relay-token request through `/avatar-relay-token`. This avoids browser CORS failures that can appear as `Failed to fetch`. Avatar settings remain separate from the regular Speech STT/TTS resource and use `avatarResourceName`, `avatarEndpoint`, `avatarRegion`, `avatarKey`, `avatarCharacter`, `avatarStyle`, and `avatarVoice`.
-
-
-## Google Document AI (version 34)
-
-Uploaded documents are read with Google Document AI. Azure Document Intelligence has
-been removed completely (code, settings and keys).
-
-Setup:
-1. In Google Cloud Console, enable the **Document AI API** and create a processor
-   (**Document OCR** for PDFs/images, or **Layout Parser** to also read DOCX/PPTX/XLSX/HTML).
-   Copy its **Processor ID** and note the region (`us` or `eu`).
-2. Create a service account with the role **Document AI API User**, create a JSON key,
-   and save it in this folder as `google-service-account.json`.
-3. In Settings, fill in Project ID, Location, Processor ID, then click
-   **Test Google Sign-in** and **Save Settings**.
-
-Google does not accept an API key for Document AI, so the browser sends the file to
-`server.py` (`POST /google-docai`), which signs in with the key file and forwards this
-request to Google:
-
-```json
-{
-  "skipHumanReview": true,
-  "rawDocument": { "mimeType": "application/pdf", "content": "<base64>" }
-}
+```
+Browser pages ── http://localhost:5512 ── server.py ── Google Cloud
+                                            │            ├─ Document AI            (read uploaded documents)
+                                            │            ├─ Vertex AI Gemini       (questions, analysis, translation, ID reading, transcription check)
+                                            │            ├─ Cloud Text-to-Speech   (Gemini-TTS interview voice, streamed)
+                                            │            └─ (sign-in token)
+Browser ── WebSocket ── Vertex AI Gemini Live  (speech-to-text, and Lisa's video avatar)
 ```
 
-`start-ai-caseworker.bat` installs the needed library (`pip install google-auth requests`).
+`server.py` signs in with `google-service-account.json` and forwards requests, so no Google key is ever placed in the browser. For Gemini Live the browser receives a short-lived access token from the server and opens the WebSocket itself.
+
+| Feature | Google service / model |
+|---|---|
+| Document text extraction | Document AI (Document OCR or Layout Parser processor) |
+| Question extraction, answer analysis, follow-ups, guardrails, translation, ID reading | Gemini on Vertex AI, default `gemini-3.8-flash` (location `global`) |
+| Interview voice | Gemini-TTS on Cloud Text-to-Speech, `gemini-2.5-flash-tts`, voice `Kore` (streamed, starts in ~1 s) |
+| Speech-to-text | Gemini Live `gemini-live-2.5-flash-native-audio` (`us-central1`) with expected-language hints |
+| Virtual Caseworker avatar | Gemini Live `gemini-3.8-live` with Live Avatar (`us-central1`), avatar face `Kira`, voice `zephyr`; introduces itself as Lisa |
+
+### server.py endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/google-docai`, `/google-docai/status` | Document AI processing / sign-in test |
+| POST | `/gemini` | Vertex AI `generateContent` proxy |
+| POST | `/google-tts` | Gemini-TTS, whole clip (fallback) |
+| POST | `/google-tts-stream` | Gemini-TTS streamed as raw PCM (24 kHz) |
+| POST | `/google-live-token` | Short-lived token for the Gemini Live WebSocket |
+| POST | `/save-config` | Writes the Settings to `config.js` |
+| GET / POST / DELETE | `/api/clients`, `/api/clients/<id>` | Mock CRM (stored in `mock_crm_clients.json`) |
+
+## Google Cloud setup (one time)
+
+1. Create or pick a Google Cloud project.
+2. Enable these APIs: **Document AI API**, **Vertex AI API**, **Cloud Text-to-Speech API**.
+3. Document AI: create a processor (**Document OCR** for PDFs/images, or **Layout Parser** to also read DOCX/PPTX/XLSX/HTML) and note its **Processor ID** and region (`us` or `eu`).
+4. Create a service account with the roles **Document AI API User** and **Vertex AI User**, create a JSON key and save it in this folder as `google-service-account.json`.
+5. Gemini Live Avatar must be available to the project in `us-central1` (it is not offered in `global`).
+6. In **Settings** enter the Project ID, Document AI location and processor, then use **Test Google Sign-in**, **Test Connection** and **Test Gemini Voice**, and **Save Settings**.
+
 If no key file is found, the server falls back to `gcloud auth print-access-token`.
 
-Do not share the zip publicly while `google-service-account.json` is inside it.
+### Settings
 
+| Section | Fields (defaults) |
+|---|---|
+| Google Document AI | Project ID, location (`us`), processor ID, key file (`google-service-account.json`) |
+| Google Gemini (Vertex AI) | Model (`gemini-3.8-flash`), location (`global`) |
+| Interview Voice | Gemini voice (`Kore`), voice model (`gemini-2.5-flash-tts`) |
+| Gemini Live Avatar | Avatar face (`Kira`), avatar voice (`zephyr`), Live model (`gemini-3.8-live`), region (`us-central1`) |
 
-## Google Gemini (version 35)
+## Main files
 
-Azure OpenAI (GPT) has been replaced by Google Gemini for every AI step: question
-extraction, answer analysis, intent detection, follow-ups and translation.
-Azure OpenAI TTS was removed too; voice still uses Azure Speech / the avatar.
+| File | Role |
+|---|---|
+| `js/app.js` | Shared code: settings, Gemini calls, Document AI pipeline, validation and read-back helpers, voice, Client Intake recording, Responses/CRM mapping |
+| `js/client-intake.js` | Client Intake page: interview flow, follow-ups, confirmation, interview language |
+| `js/virtual-caseworker.js` | Virtual Caseworker page: automatic interview, language switching, guardrails, confirmation |
+| `js/gemini-live-stt.js` | Speech-to-text with Gemini Live (shared by both interview pages) |
+| `js/gemini-transcribe.js` | Re-transcription of mixed-language answers with Gemini, English-likeness check |
+| `js/gemini-avatar.js` | Lisa: Gemini Live Avatar player (MP4 stream via MediaSource, voice routed through WebRTC so echo cancellation keeps it out of the microphone) |
+| `js/id-scan.js` | ID Scan page |
+| `intake-rules.json` | Fields that use the step-by-step confirmation workflow (full name, country of birth, current address) |
+| `CLIENT-INTAKE-ARCHITECTURE.md` | Notes on the interview turn routing |
 
-Setup: create an API key at https://aistudio.google.com/apikey (pick the
-AI-Caseworker project), paste it in Settings > Google Gemini, keep the model
-`gemini-3.8-flash`, click Test Connection, then Save Settings.
+## Data and security
 
-Model choices: `gemini-3.8-flash` (recommended), `gemini-3.5-flash-lite`
-(fastest, cheapest), `gemini-3.1-pro-preview` (most capable, slower).
-The browser calls `generativelanguage.googleapis.com/v1beta/models/<model>:generateContent`
-directly with the key; JSON answers use `responseMimeType: application/json`.
+- **Never commit `config.js` or `google-service-account.json`.** The key file gives access to the Google Cloud project; this repository is public.
+- Questions, translations, answers and the scanned ID details are stored in the browser (localStorage). The ID image itself is not stored.
+- `mock_crm_clients.json` is written by the server whenever a client is sent to the Mock CRM; keep it empty in the repository.
+- This is a demo setup, not a production architecture.
 
+## Troubleshooting
 
-## Gemini on Vertex AI (version 36)
-
-Gemini now runs on Google Cloud **Vertex AI** instead of an AI Studio API key, so it is
-paid from the Google Cloud free-trial credit (AI Studio keys cannot use that credit).
-It uses the same Project ID and `google-service-account.json` as Document AI.
-
-One-time setup in Google Cloud (project AI-Caseworker):
-1. Enable the **Vertex AI API** (APIs & Services > Library > "Vertex AI API" > Enable).
-2. IAM: give `docai-caseworker@...` the role **Vertex AI User** (keep Document AI API User).
-3. Settings > Google Gemini (Vertex AI): model `gemini-3.8-flash`, location `global`,
-   then Test Connection and Save Settings.
-
-The browser posts to `server.py` (`POST /gemini`), which calls
-`https://aiplatform.googleapis.com/v1/projects/<project>/locations/global/publishers/google/models/<model>:generateContent`.
-If a model is not available in `global`, try location `us-central1`.
-
-
-## Interview voice: Google Gemini-TTS (version 37)
-
-The interview (Client Intake, and Play Question) now speaks with a Google Gemini voice
-(Gemini-TTS on Cloud Text-to-Speech) in every interview language, including Persian,
-French and Arabic. It uses the same Project ID and `google-service-account.json`.
-
-One-time setup:
-1. Google Cloud > APIs & Services > Library > **Cloud Text-to-Speech API** > Enable.
-2. The service account already has **Agent Platform User** (needed by Gemini-TTS).
-3. Settings > Interview Voice: Voice service = Google, voice `Kore`, model
-   `gemini-2.5-flash-tts`, then **Test Gemini Voice** and **Save Settings**.
-
-If Google fails, the app falls back to the Azure Speech voice, then the browser voice.
-Listening to the client (speech-to-text) still uses Azure Speech, and the Lisa avatar
-keeps its own Azure voice.
+- **No sound / interview stays on "Starting…"**: click once on the page (or the ▶ Start button); browsers block audio and microphone processing until the user interacts.
+- **Changes not visible**: press **Ctrl+F5**, and make sure the server was started from this folder.
+- **Speech in the wrong language**: check the interview language (Client Intake) or ask Lisa to switch language; answers that do not look like the expected language are re-checked automatically.
+- **Avatar does not appear**: check Settings > Gemini Live Avatar (model `gemini-3.8-live`, region `us-central1`) and that the service account has **Vertex AI User**.
