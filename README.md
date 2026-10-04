@@ -36,7 +36,7 @@ Sample files: `client_intake_questions_reordered.pdf` (intake form) and `Specime
 3. Answers in Persian/French, or text that does not look like English, are re-transcribed from the recording by Gemini, so English names, numbers and postal codes are written correctly (e.g. `999 Marine Drive`, `X7A 1A1`).
 4. **Guardrails** reject out-of-scope requests (chances of PR, advice, off-topic chat) without counting them as answers.
 5. **Gemini analyzes** the answer against the question's validation rules (required date parts, numbers, choices, address components). Impossible values such as a future date of birth or 31 February are rejected. Missing information leads to a targeted follow-up (at most 3).
-6. The understood answer is **read back** ("I have the date as 24 August 1983. Is that correct?"). It is saved only after the client says yes; "no" lets the client correct it. Names are spelled back letter by letter. Name, country of birth and address use a dedicated step-by-step workflow (`intake-rules.json`).
+6. The understood answer is **read back** ("I have the date as 10 August 1960. Is that correct?"). It is saved only after the client says yes; "no" lets the client correct it. Names are spelled back letter by letter. Name, country of birth and address use a dedicated step-by-step workflow (`intake-rules.json`).
 7. Saved answers keep the client's words, an English translation and the mapped value; unresolved answers are flagged for caseworker review.
 
 Language: the client can ask to switch language at any time ("می‌تونی فارسی صحبت کنی؟", "speak French"). In Client Intake the language is chosen at the top of the page. Answers are always analyzed and saved in English.
