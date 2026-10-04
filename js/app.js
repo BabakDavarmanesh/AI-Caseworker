@@ -577,7 +577,10 @@ async function testGoogleDocAI() {
 //   callGPT(systemPrompt, userContent, expectJson) -> parsed JSON object, or text.
 const GEMINI_DEFAULT_MODEL = 'gemini-3.8-flash';
 
-async function callGPT(systemPrompt, userContent, expectJson = true) {
+// options.deepThinking: use the model's full thinking (question extraction,
+// question-bank translation). Everything else — the live interview steps —
+// uses low thinking, which answers in ~1–2 s instead of ~3 s.
+async function callGPT(systemPrompt, userContent, expectJson = true, options = {}) {
   const s = loadSettings();
   if (!s.gcpProjectId) {
     throw new Error('Gemini not configured — set the Google Project ID in Settings.');
@@ -589,8 +592,10 @@ async function callGPT(systemPrompt, userContent, expectJson = true) {
     systemInstruction: { parts: [{ text: String(systemPrompt || '') }] },
     contents: [{ role: 'user', parts: [{ text: String(userContent || '') }] }]
   };
-  if (expectJson) {
-    body.generationConfig = { responseMimeType: 'application/json' };
+  body.generationConfig = {};
+  if (expectJson) body.generationConfig.responseMimeType = 'application/json';
+  if (!options.deepThinking) {
+    body.generationConfig.thinkingConfig = /^gemini-3/.test(model) ? { thinkingLevel: 'low' } : { thinkingBudget: 0 };
   }
 
   let res;
@@ -776,7 +781,7 @@ function validateExtractedQuestions(result, sourceContent) {
 async function generateQuestionsFromContent(content) {
   const truncated = content.substring(0, 28000);
   const userMsg = `STRICT EXTRACTION MODE. Extract only the explicit questions present in the following document content. Do not add any questions of your own. Preserve the source order.\n\nSOURCE DOCUMENT CONTENT:\n${truncated}`;
-  const result = await callGPT(SYSTEM_GENERATE_QUESTIONS, userMsg, true);
+  const result = await callGPT(SYSTEM_GENERATE_QUESTIONS, userMsg, true, { deepThinking: true });
   return validateExtractedQuestions(result, truncated);
 }
 
@@ -1335,23 +1340,30 @@ function normalizeLocalSpeech(text) {
     .trim();
 }
 
+// Plain yes / no replies to a read-back, recognized without an AI call (saves
+// ~3 s). Only complete short replies match; "No, it was 1984" (a rejection with
+// a correction) returns null and goes to the AI so the correction is kept.
+const LOCAL_YES_PATTERNS = (() => {
+  const lead = "(yes|yeah|yep|yup|yes yes|correct|right|exactly|sure|absolutely|of course|okay|ok|perfect|true)";
+  const tail = "((that|it|this)( is|'s|s)?( all)? (correct|right|true|fine|good)|(that|it) is|that's it|it's|correct|right|exactly|thank you|thanks|please|sir|ma'am)";
+  return [
+    new RegExp(`^(${lead}( ${lead})*( ${tail})*|${tail}( ${tail})*)$`),
+    /^((بله|بلی|آره|اره|آری)( (درسته|درست است|درست|صحیحه|صحیح است|صحیح|همینه|همین است|دقیقا|کاملا درسته|کاملا درست است|همینطوره|مرسی|ممنون))?|درسته|درست است|صحیحه|صحیح است|همینه|همین است|دقیقا|کاملا درسته|کاملا درست است|همینطوره)$/,
+    /^(oui|exactement|d'accord|c'est (correct|ça|ca|exact|juste|bon)|oui (c'est (correct|ça|ca|exact|juste|bon)|exactement|merci))$/
+  ];
+})();
+
+const LOCAL_NO_PATTERNS = [
+  /^(no|nope|nah|no no|incorrect|wrong|not correct|not right|no (that's|that is|it's|it is) (not (correct|right)|wrong|incorrect)|(that's|that is|it's|it is) (not (correct|right)|wrong|incorrect)|no (not correct|wrong|incorrect))$/,
+  /^((نه|خیر|نخیر)( (اشتباهه|اشتباه است|اشتباه|غلطه|غلط است|درست نیست|اینطور نیست))?|اشتباهه|اشتباه است|غلطه|غلط است|درست نیست|اینطور نیست)$/,
+  /^(non|c'est faux|ce n'est pas (correct|ça|ca|exact|juste)|non (c'est faux|ce n'est pas (correct|ça|ca|exact|juste)))$/
+];
+
 function detectLocalConfirmation(text) {
-  const t = normalizeLocalSpeech(text);
-
-  const yesPatterns = [
-    /^(yes|yeah|yep|correct|right|that is correct|that's correct|it is correct|sounds right|exactly|sure)$/,
-    /^(بله|آره|اره|درسته|صحیحه|درست است)$/,
-    /^(oui|correct|c'est correct|exactement|d'accord)$/
-  ];
-
-  const noPatterns = [
-    /^(no|nope|incorrect|wrong|that is wrong|that's wrong|not correct|it is not correct)$/,
-    /^(نه|خیر|اشتباهه|غلطه|درست نیست)$/,
-    /^(non|incorrect|c'est faux|ce n'est pas correct)$/
-  ];
-
-  if (yesPatterns.some(p => p.test(t))) return 'confirmed';
-  if (noPatterns.some(p => p.test(t))) return 'rejected';
+  const t = normalizeLocalSpeech(String(text || '').replace(/[،؛؟]/g, ' ')).replace(/‌/g, ' ').replace(/[’`]/g, "'").replace(/\s+/g, ' ').trim();
+  if (!t || t.split(' ').length > 8) return null;
+  if (LOCAL_YES_PATTERNS.some(p => p.test(t))) return 'confirmed';
+  if (LOCAL_NO_PATTERNS.some(p => p.test(t))) return 'rejected';
   return null;
 }
 
@@ -5612,7 +5624,7 @@ async function startTranslation(langCode) {
     cnt.textContent   = `${done} / ${total} questions`;
     bar.style.width   = (done / total * 100) + '%';
     try {
-      const translated = await callGPT(sys, q.question, false);
+      const translated = await callGPT(sys, q.question, false, { deepThinking: true });
       txs[langCode][q.id] = {
         original:   q.question,
         translated: (typeof translated === 'string' ? translated : q.question).trim(),

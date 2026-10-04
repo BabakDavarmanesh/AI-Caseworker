@@ -10,7 +10,14 @@
 // Ask -> Listen -> Detect end of speech -> Analyze -> Follow up / Next question.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const AA_END_SILENCE_MS = 1200;   // extra wait after a final transcript (client may continue)
+const AA_END_SILENCE_MS = 700;    // (Lisa barge-in path only)
+const AA_PAUSE_MS = 1500;         // silence that ends a normal answer
+const AA_PAUSE_LONG_MS = 2500;    // address, name and other step-by-step answers
+const AA_PAUSE_CONFIRM_MS = 1000; // yes / no to a read-back
+const AA_ANSWER_MAX_GAP_MS = 15000; // safety net if the microphone level never drops
+// Gemini Live sends the text ~1.5–2.5 s after the voice stops (1 s of silence
+// ends the sentence, then transcription). Don't treat that gap as "no answer".
+const AA_LIVE_TRANSCRIPT_WAIT_MS = 3500;
 const AA_INITIAL_SILENCE_MS = 8000;
 const AA_SWITCH_DETECT_LANGUAGES = ['en-US', 'fa-IR', 'fr-CA'];
 const AA_SWITCH_DECISION_GRACE_MS = 220;
@@ -422,7 +429,14 @@ async function aaHandleLanguageSwitch(transcript) {
     targetLanguage = fast;
   }
 
-  if (!targetLanguage) {
+  // The AI intent check costs ~2 s, so it only runs when the sentence mentions
+  // a language or speaking/understanding, or is in a different script than the
+  // session language. Normal answers skip it.
+  const mentionsLanguage = /(english|anglais|ingl[eé]s|persian|farsi|parsi|french|fran[cç]ais|language|langue|speak|talk|understand|comprend|parler|parlez|فارسی|پارسی|انگلیسی|فرانسه|فرانسوی|زبان|حرف بزن|صحبت|بلد نیستم|نمی ?فهمم|متوجه نمی)/i.test(transcript);
+  const otherScript = (_aa.language === 'en-US' || _aa.language === 'fr-CA')
+    ? /[؀-ۿ]/.test(transcript)
+    : (_aa.language === 'fa-IR' && !/[؀-ۿ]/.test(transcript) && /[a-z]{3,}/i.test(transcript));
+  if (!targetLanguage && (mentionsLanguage || otherScript)) {
     const intent = await detectIntent(transcript, _aa.language);
     if (intent.intent === 'change_language' && intent.targetLanguage) {
       targetLanguage = aaNormalizeSwitchTarget(intent.targetLanguage);
@@ -981,15 +995,45 @@ function aaFinishListenWaiter() {
   waiter.resolve(transcript);
 }
 
+// How long the client must be silent before an answer counts as finished.
+// Longer answers (address, name, other step-by-step fields) get more time to
+// pause and think; a yes/no to a read-back gets less.
+function aaAnswerPauseMs() {
+  const q = _aa.question;
+  if (_aa.pendingConfirm) return AA_PAUSE_CONFIRM_MS;
+  const long = (typeof conversationQuestionNeedsWorkflow === 'function' && q && conversationQuestionNeedsWorkflow(q)) ||
+    ['address', 'name'].includes(q?.type) || /\b(address|name)\b/i.test(q?.question || '');
+  return long ? AA_PAUSE_LONG_MS : AA_PAUSE_MS;
+}
+
+// Called after every transcript piece. Gemini Live only sends text when a
+// sentence ends, so the microphone's voice level decides whether the client
+// is still talking: the answer is finished once there has been no voice and
+// no pending transcript for aaAnswerPauseMs().
 function aaRestartListenEndTimer() {
   const waiter = _aa.listenWaiter;
   if (!waiter || waiter.finished) return;
 
   clearTimeout(waiter.endTimer);
-  waiter.endTimer = setTimeout(
-    aaFinishListenWaiter,
-    AA_END_SILENCE_MS
-  );
+  waiter.lastFinalAt = Date.now();
+
+  const check = () => {
+    if (_aa.listenWaiter !== waiter || waiter.finished) return;
+    const stt = _aa.persistentRecognizer;
+    const now = Date.now();
+    // Voice heard during this answer: count the pause from where the voice
+    // stopped. Otherwise (very quiet voice) count it from the last text.
+    const voiced = !!stt && stt.lastVoiceAt > (waiter.createdAt || 0);
+    const quietFor = voiced ? stt.msSinceVoice() : now - waiter.lastFinalAt;
+    const stillTranscribing = !!stt?.transcribing;
+    const settled = now - waiter.lastFinalAt >= 400;
+    if ((!stillTranscribing && settled && quietFor >= aaAnswerPauseMs()) || now - waiter.lastFinalAt > AA_ANSWER_MAX_GAP_MS) {
+      aaFinishListenWaiter();
+      return;
+    }
+    waiter.endTimer = setTimeout(check, 150);
+  };
+  waiter.endTimer = setTimeout(check, 150);
 }
 
 
@@ -1586,6 +1630,7 @@ async function aaListen(languageCode) {
   return new Promise(resolve => {
     const waiter = {
       resolve,
+      createdAt: Date.now(),
       languageCode: languageCode || _aa.language || 'en-US',
       finished: false,
       finalParts: [],
@@ -1614,15 +1659,22 @@ async function aaListen(languageCode) {
     if (waiter.finalParts.length || waiter.latestPartial) {
       aaRestartListenEndTimer();
     } else {
-      waiter.initialTimer = setTimeout(() => {
+      const noAnswerCheck = () => {
         if (
-          _aa.listenWaiter === waiter &&
-          !waiter.finalParts.length &&
-          !waiter.latestPartial
-        ) {
-          aaFinishListenWaiter();
+          _aa.listenWaiter !== waiter ||
+          waiter.finalParts.length ||
+          waiter.latestPartial
+        ) return;
+        // The first sentence may still be in progress (text comes after it ends).
+        const stt = _aa.persistentRecognizer;
+        const voiced = !!stt && stt.lastVoiceAt > (waiter.createdAt || 0);
+        if (stt && (stt.transcribing || (voiced && stt.msSinceVoice() < AA_LIVE_TRANSCRIPT_WAIT_MS))) {
+          waiter.initialTimer = setTimeout(noAnswerCheck, 500);
+          return;
         }
-      }, AA_INITIAL_SILENCE_MS);
+        aaFinishListenWaiter();
+      };
+      waiter.initialTimer = setTimeout(noAnswerCheck, AA_INITIAL_SILENCE_MS);
     }
 
     waiter.hardTimer = setTimeout(() => {

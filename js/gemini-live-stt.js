@@ -44,6 +44,12 @@ class GeminiLiveStt {
 
   get isOpen() { return !!this.ws && this.ws.readyState === WebSocket.OPEN && this.ready; }
 
+  // Milliseconds since voice was last heard on the microphone (local level),
+  // and whether a transcript is still being received. Gemini only sends text
+  // after a sentence ends, so these tell the page that the client is still talking.
+  msSinceVoice() { return this.lastVoiceAt ? Date.now() - this.lastVoiceAt : Infinity; }
+  get transcribing() { return !!(this.pending || this.settleTimer); }
+
   async start() {
     this.stopped = false;
     this.stream = await navigator.mediaDevices.getUserMedia({
@@ -123,6 +129,9 @@ class GeminiLiveStt {
       model: `projects/${s.gcpProjectId}/locations/${GEMINI_STT_LOCATION}/publishers/google/models/${GEMINI_STT_MODEL}`,
       generationConfig: { responseModalities: ['AUDIO'] },
       inputAudioTranscription: this.languageCodes.length ? { languageCodes: this.languageCodes } : {},
+      // Default end-of-speech detection split answers at ~0.5 s pauses (e.g.
+      // while the client recalls a postal code). Require ~1 s of silence.
+      realtimeInputConfig: { automaticActivityDetection: { silenceDurationMs: 1000, endOfSpeechSensitivity: 'END_SENSITIVITY_LOW' } },
       systemInstruction: { parts: [{ text: 'You are a silent transcription helper. Never speak or reply. Output nothing.' }] }
     };
 
