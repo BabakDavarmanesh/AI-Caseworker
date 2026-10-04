@@ -1,177 +1,237 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Settings — CaseBridge AI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — CaseBridge AI</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/app.css">
 </head>
+
 <body data-page="settings">
-<div class="layout">
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">
-  <svg viewBox="0 0 24 24">
-    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-    <circle cx="12" cy="12" r="3.5"/>
-  </svg>
-</div>
-    <div>
-      <div class="logo-text">CaseBridge AI</div>
-      <div class="logo-sub">Hackathon Demo</div>
-    </div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M22 8 a10 10 0 1 0 0 16" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none" />
+            <path d="M10 8 a10 10 0 1 1 0 16" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none"
+              opacity=".55" />
+          </svg>
+        </div>
+        <div>
+          <div class="logo-text">CaseBridge AI</div>
+          <div class="logo-sub">Hackathon Demo</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <div class="nav-section">ASSESSMENT</div>
+        <a class="nav-item" href="question-engine.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z" />
+            </svg></span>Question Engine</a>
+        <a class="nav-item" href="question-bank.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z" />
+              <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
+            </svg></span>Question Bank</a>
+        <a class="nav-item" href="translation.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" />
+            </svg></span>Translation Engine</a>
+        <div class="nav-section">CLIENT SESSION</div>
+        <a class="nav-item" href="id-scan.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <circle cx="8" cy="12" r="2.5" />
+              <path d="M13 10h5M13 14h3" />
+            </svg></span>ID Scan</a>
+        <a class="nav-item" href="interview.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg></span>Client Intake</a>
+        <a class="nav-item" href="ai-assistant.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="8" width="18" height="12" rx="2" />
+              <path d="M12 8V4M8 14h.01M16 14h.01" />
+            </svg></span>Virtual Caseworker</a>
+        <div class="nav-section">CASE MANAGEMENT</div>
+        <a class="nav-item" href="responses.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="2" width="8" height="4" rx="1" />
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 12h6M9 16h6" />
+            </svg></span>Responses</a>
+        <a class="nav-item" href="crm.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg></span>Mock CRM</a>
+        <div class="nav-section">SYSTEM</div>
+        <a class="nav-item active" href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+            </svg></span>Settings</a>
+      </nav>
+      <div class="sidebar-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>Secure demo environment</div>
+    </aside>
+    <main class="main">
+      <section id="sec-settings">
+        <div class="page-header">
+          <h1>⚙️ Settings</h1>
+          <p>Demo mode: Google settings (Document AI, Gemini, voice and avatar) are saved to config.js in this folder.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔍 Google Document AI</div>
+          <div class="settings-grid">
+            <div class="form-group">
+              <label>Project ID</label>
+              <input type="text" id="s-gcp-project" placeholder="my-gcp-project">
+            </div>
+            <div class="form-group">
+              <label>Location</label>
+              <select id="s-gcp-location">
+                <option value="us">us</option>
+                <option value="eu">eu</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Processor ID</label>
+              <input type="text" id="s-gcp-processor" placeholder="a1b2c3d4e5f6a7b8">
+            </div>
+            <div class="form-group">
+              <label>Service account key file (in this folder)</label>
+              <input type="text" id="s-gcp-credentials" placeholder="google-service-account.json">
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted)">
+            Recommended processor: <code>Document OCR</code> or <code>Layout Parser</code> · Calls go through the local
+            server (Google needs a service-account sign-in, not an API key).
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="testGoogleDocAI()" style="margin-top:8px">🔗 Test Google
+            Sign-in</button>
+          <div id="gdocai-test-result" style="margin-top:8px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🧠 Google Gemini (Vertex AI)</div>
+          <div class="settings-grid">
+            <div class="form-group">
+              <label>Model</label>
+              <input type="text" id="s-gemini-model" list="gemini-models" placeholder="gemini-3.8-flash">
+              <datalist id="gemini-models">
+                <option value="gemini-3.8-flash">Recommended — fast and smart</option>
+                <option value="gemini-3.5-flash-lite">Fastest / cheapest</option>
+                <option value="gemini-3.1-pro-preview">Most capable (slower)</option>
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label>Vertex AI location</label>
+              <input type="text" id="s-gemini-location" placeholder="global">
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted)">
+            Runs on Google Cloud Vertex AI with the same Project ID and service-account key file as Document AI — no API
+            key, paid from your Google Cloud credit. The service account needs the <code>Vertex AI User</code> role.
+            Click <strong>Test Connection</strong> below to check it.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🗣️ Interview Voice — Google Gemini</div>
+          <div class="settings-grid">
+            <div class="form-group">
+              <label>Gemini voice</label>
+              <select id="s-google-tts-voice">
+                <option value="Kore">Kore — female, firm</option>
+                <option value="Aoede">Aoede — female, breezy</option>
+                <option value="Leda">Leda — female, youthful</option>
+                <option value="Callirrhoe">Callirrhoe — female, easy-going</option>
+                <option value="Zephyr">Zephyr — female, bright</option>
+                <option value="Charon">Charon — male, informative</option>
+                <option value="Puck">Puck — male, upbeat</option>
+                <option value="Fenrir">Fenrir — male, excitable</option>
+                <option value="Orus">Orus — male, firm</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Voice model</label>
+              <input type="text" id="s-google-tts-model" list="google-tts-models" placeholder="gemini-2.5-flash-tts">
+              <datalist id="google-tts-models">
+                <option value="gemini-2.5-flash-tts">Stable, fast (recommended)</option>
+                <option value="gemini-3.1-flash-tts-preview">Newest (preview)</option>
+                <option value="gemini-2.5-flash-lite-preview-tts">Fastest (preview)</option>
+                <option value="gemini-2.5-pro-tts">Highest quality, slower</option>
+              </datalist>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted)">
+            Speaks interview questions in every interview language (English, Persian, French, Arabic…). Uses Google
+            Cloud Text-to-Speech with the same Project ID and key file as Document AI; the service account needs
+            <code>Agent Platform User</code> (already added) and the <code>Cloud Text-to-Speech API</code> must be
+            enabled.
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="testGoogleVoice()" style="margin-top:8px">🔊 Test Gemini
+            Voice</button>
+          <div id="google-tts-test-result" style="margin-top:8px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🧑‍💼 Gemini Live Avatar — Virtual Caseworker</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+            The avatar that asks the Question Engine questions on the Virtual Caseworker page. Uses the Google Project
+            ID and service-account key file above.
+          </div>
+          <div class="settings-grid">
+            <div class="form-group">
+              <label>Avatar face (Gemini avatar)</label>
+              <input type="text" id="s-gemini-avatar-name" placeholder="Kira" value="Kira">
+              <small style="color:var(--text-muted)">Only chooses the face. The avatar always introduces itself as
+                Lisa.</small>
+            </div>
+            <div class="form-group">
+              <label>Gemini avatar voice</label>
+              <input type="text" id="s-gemini-avatar-voice" placeholder="zephyr" value="zephyr">
+            </div>
+            <div class="form-group">
+              <label>Gemini Live model</label>
+              <input type="text" id="s-gemini-live-model" placeholder="gemini-3.8-live" value="gemini-3.8-live">
+            </div>
+            <div class="form-group">
+              <label>Gemini Live region</label>
+              <input type="text" id="s-gemini-live-location" placeholder="us-central1" value="us-central1">
+              <small style="color:var(--text-muted)">The avatar model is not available in "global" for this
+                project.</small>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+          <button class="btn btn-secondary" onclick="testConnection()">🔗 Test Connection</button>
+        </div>
+        <div id="settings-test-result" style="margin-top:12px"></div>
+      </section>
+    </main>
   </div>
-  <nav class="nav">
-    <div class="nav-section">ASSESSMENT</div>
-    <a class="nav-item" href="question-engine.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></svg></span>Question Engine</a>
-    <a class="nav-item" href="question-bank.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg></span>Question Bank</a>
-    <a class="nav-item" href="translation.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></span>Translation Engine</a>
-    <div class="nav-section">CLIENT SESSION</div>
-    <a class="nav-item" href="id-scan.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h5M13 14h3"/></svg></span>ID Scan</a>
-    <a class="nav-item" href="interview.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Client Intake</a>
-    <a class="nav-item" href="ai-assistant.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4M8 14h.01M16 14h.01"/></svg></span>Virtual Caseworker</a>
-    <div class="nav-section">CASE MANAGEMENT</div>
-    <a class="nav-item" href="responses.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 12h6M9 16h6"/></svg></span>Responses</a>
-    <a class="nav-item" href="crm.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Mock CRM</a>
-    <div class="nav-section">SYSTEM</div>
-    <a class="nav-item active" href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>Settings</a>
-  </nav>
-  <div class="sidebar-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Secure demo environment</div>
-</aside>
-<main class="main">
-<section id="sec-settings">
-      <div class="page-header">
-        <h1>⚙️ Settings</h1>
-        <p>Demo mode: Google settings (Document AI, Gemini, voice and avatar) are saved to config.js in this folder.</p>
-      </div>
+  <div class="toast-container" id="toast-container"></div>
 
-      <div class="card">
-        <div class="card-title">🔍 Google Document AI</div>
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>Project ID</label>
-            <input type="text" id="s-gcp-project" placeholder="my-gcp-project">
-          </div>
-          <div class="form-group">
-            <label>Location</label>
-            <select id="s-gcp-location">
-              <option value="us">us</option>
-              <option value="eu">eu</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Processor ID</label>
-            <input type="text" id="s-gcp-processor" placeholder="a1b2c3d4e5f6a7b8">
-          </div>
-          <div class="form-group">
-            <label>Service account key file (in this folder)</label>
-            <input type="text" id="s-gcp-credentials" placeholder="google-service-account.json">
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--text-muted)">
-          Recommended processor: <code>Document OCR</code> or <code>Layout Parser</code> · Calls go through the local server (Google needs a service-account sign-in, not an API key).
-        </div>
-        <button class="btn btn-secondary btn-sm" onclick="testGoogleDocAI()" style="margin-top:8px">🔗 Test Google Sign-in</button>
-        <div id="gdocai-test-result" style="margin-top:8px"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">🧠 Google Gemini (Vertex AI)</div>
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>Model</label>
-            <input type="text" id="s-gemini-model" list="gemini-models" placeholder="gemini-3.8-flash">
-            <datalist id="gemini-models">
-              <option value="gemini-3.8-flash">Recommended — fast and smart</option>
-              <option value="gemini-3.5-flash-lite">Fastest / cheapest</option>
-              <option value="gemini-3.1-pro-preview">Most capable (slower)</option>
-            </datalist>
-          </div>
-          <div class="form-group">
-            <label>Vertex AI location</label>
-            <input type="text" id="s-gemini-location" placeholder="global">
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--text-muted)">
-          Runs on Google Cloud Vertex AI with the same Project ID and service-account key file as Document AI — no API key, paid from your Google Cloud credit. The service account needs the <code>Vertex AI User</code> role. Click <strong>Test Connection</strong> below to check it.
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">🗣️ Interview Voice — Google Gemini</div>
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>Gemini voice</label>
-            <select id="s-google-tts-voice">
-              <option value="Kore">Kore — female, firm</option>
-              <option value="Aoede">Aoede — female, breezy</option>
-              <option value="Leda">Leda — female, youthful</option>
-              <option value="Callirrhoe">Callirrhoe — female, easy-going</option>
-              <option value="Zephyr">Zephyr — female, bright</option>
-              <option value="Charon">Charon — male, informative</option>
-              <option value="Puck">Puck — male, upbeat</option>
-              <option value="Fenrir">Fenrir — male, excitable</option>
-              <option value="Orus">Orus — male, firm</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Voice model</label>
-            <input type="text" id="s-google-tts-model" list="google-tts-models" placeholder="gemini-2.5-flash-tts">
-            <datalist id="google-tts-models">
-              <option value="gemini-2.5-flash-tts">Stable, fast (recommended)</option>
-              <option value="gemini-3.1-flash-tts-preview">Newest (preview)</option>
-              <option value="gemini-2.5-flash-lite-preview-tts">Fastest (preview)</option>
-              <option value="gemini-2.5-pro-tts">Highest quality, slower</option>
-            </datalist>
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--text-muted)">
-          Speaks interview questions in every interview language (English, Persian, French, Arabic…). Uses Google Cloud Text-to-Speech with the same Project ID and key file as Document AI; the service account needs <code>Agent Platform User</code> (already added) and the <code>Cloud Text-to-Speech API</code> must be enabled.
-        </div>
-        <button class="btn btn-secondary btn-sm" onclick="testGoogleVoice()" style="margin-top:8px">🔊 Test Gemini Voice</button>
-        <div id="google-tts-test-result" style="margin-top:8px"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">🧑‍💼 Gemini Live Avatar — Virtual Caseworker</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
-          The avatar that asks the Question Engine questions on the Virtual Caseworker page. Uses the Google Project ID and service-account key file above.
-        </div>
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>Avatar face (Gemini avatar)</label>
-            <input type="text" id="s-gemini-avatar-name" placeholder="Kira" value="Kira">
-            <small style="color:var(--text-muted)">Only chooses the face. The avatar always introduces itself as Lisa.</small>
-          </div>
-          <div class="form-group">
-            <label>Gemini avatar voice</label>
-            <input type="text" id="s-gemini-avatar-voice" placeholder="zephyr" value="zephyr">
-          </div>
-          <div class="form-group">
-            <label>Gemini Live model</label>
-            <input type="text" id="s-gemini-live-model" placeholder="gemini-3.8-live" value="gemini-3.8-live">
-          </div>
-          <div class="form-group">
-            <label>Gemini Live region</label>
-            <input type="text" id="s-gemini-live-location" placeholder="us-central1" value="us-central1">
-            <small style="color:var(--text-muted)">The avatar model is not available in "global" for this project.</small>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
-        <button class="btn btn-secondary" onclick="testConnection()">🔗 Test Connection</button>
-      </div>
-      <div id="settings-test-result" style="margin-top:12px"></div>
-    </section>
-</main>
-</div>
-<div class="toast-container" id="toast-container"></div>
-
-<script src="config.js"></script>
-<script src="js/app.js?v=58"></script>
+  <script src="config.js"></script>
+  <script src="js/app.js?v=58"></script>
 </body>
+
 </html>
