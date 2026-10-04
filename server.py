@@ -554,45 +554,6 @@ class Handler(SimpleHTTPRequestHandler):
                 self._send_json(502, {"ok": False, "error": str(exc)})
             return
 
-        if self.path == "/avatar-relay-token":
-            try:
-                data = self._read_json_body()
-                resource_name = str(data.get("resourceName", "")).strip()
-                region = str(data.get("region", "")).strip()
-                key = str(data.get("key", "")).strip()
-
-                if not resource_name or not region or not key:
-                    raise ValueError("Avatar resource name, region, and key are required")
-
-                candidates = [
-                    f"https://{resource_name}.cognitiveservices.azure.com/tts/cognitiveservices/avatar/relay/token/v1",
-                    f"https://{region}.tts.speech.microsoft.com/cognitiveservices/avatar/relay/token/v1",
-                ]
-
-                errors = []
-                for url in candidates:
-                    req = urllib.request.Request(
-                        url,
-                        method="GET",
-                        headers={"Ocp-Apim-Subscription-Key": key},
-                    )
-                    try:
-                        with urllib.request.urlopen(req, timeout=20) as resp:
-                            raw = resp.read().decode("utf-8")
-                            payload = json.loads(raw)
-                            self._send_json(200, payload)
-                            return
-                    except urllib.error.HTTPError as exc:
-                        detail = exc.read().decode("utf-8", errors="replace")[:300]
-                        errors.append(f"{url} -> HTTP {exc.code}: {detail}")
-                    except Exception as exc:
-                        errors.append(f"{url} -> {exc}")
-
-                raise RuntimeError(" | ".join(errors))
-            except Exception as exc:
-                self._send_text(502, exc)
-            return
-
         if self.path != "/save-config":
             self.send_error(404)
             return

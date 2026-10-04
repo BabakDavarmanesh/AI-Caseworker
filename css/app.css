@@ -1793,7 +1793,6 @@ body { font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   background: #fff;
 }
 
-
 /* =============================================================
    SIDEBAR LOGO — matches landing page brand mark
    Applies to all pages that use .logo-icon in the sidebar.
@@ -1826,3 +1825,31 @@ body { font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   fill: rgba(255, 255, 255, 0.25);
   stroke: #ffffff;
 }
+
+/* Client Intake: automatic analysis status (replaces the Analyze button) */
+.conv-analyze-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 600;
+  font-size: 14px;
+}
+.conv-analyze-status .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #c7d2fe;
+  border-top-color: #4338ca;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ID Scan page */
+.id-preview img { width: 100%; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 8px; display: block; }
+.id-preview-empty { border: 1px dashed var(--border); border-radius: 10px; padding: 18px 12px; text-align: center; font-size: 12.5px; color: var(--text-muted); }
+@media (max-width: 860px) { .id-result-grid { grid-template-columns: 1fr !important; } }

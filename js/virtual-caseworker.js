@@ -10,7 +10,7 @@
 // Ask -> Listen -> Detect end of speech -> Analyze -> Follow up / Next question.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const AA_END_SILENCE_MS = 1700;
+const AA_END_SILENCE_MS = 1200;   // extra wait after a final transcript (client may continue)
 const AA_INITIAL_SILENCE_MS = 8000;
 const AA_SWITCH_DETECT_LANGUAGES = ['en-US', 'fa-IR', 'fr-CA'];
 const AA_SWITCH_DECISION_GRACE_MS = 220;
@@ -200,15 +200,14 @@ async function aaMoveToNextQuestion(token) {
 }
 
 async function aaRestartMainRecognizer(targetLanguage) {
+  // Gemini speech-to-text handles every language; only clear buffered speech.
   _aa.bargeTranscript = '';
   _aa.preListenFinal = [];
   _aa.preListenPartial = '';
   _aa.preListenLanguage = '';
-
-  await aaStopPersistentRecognizer();
-  if (_aa.active) {
-    await aaStartPersistentRecognizer(targetLanguage);
-  }
+  _aa.mainRecognizerLanguage = targetLanguage || _aa.mainRecognizerLanguage;
+  const stt = _aa.persistentRecognizer;
+  if (stt?.setLanguages) stt.setLanguages([_aa.mainRecognizerLanguage, ...AA_SWITCH_DETECT_LANGUAGES]);
 }
 
 function aaNormalizeSwitchTarget(value) {
@@ -445,36 +444,63 @@ async function aaHandleLanguageSwitch(transcript) {
 // happens when the client seems to have spoken another language (shadow detector
 // heard foreign speech, or Azure's confidence was low), so normal English answers
 // get no extra delay.
-async function aaImproveTranscript(azureText) {
-  const startedAt = _aa.utteranceStartAt || 0;
-  const minConfidence = _aa.utteranceMinConfidence;
+// Writes the final transcript of a client turn into the Microphone Transcript
+// column (and clears the live box). Only this final text is analyzed.
+function aaShowFinalTranscript(text, label, rechecked) {
+  const live = document.getElementById('aa-transcript-live');
+  if (live) { live.textContent = ''; live.style.display = 'none'; }
+  const finalEl = document.getElementById('aa-transcript-final');
+  const empty = document.getElementById('aa-transcript-empty');
+  if (!finalEl || !text) return;
+  const row = document.createElement('div');
+  row.dataset.text = text;
+  row.style.cssText = 'padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:14px;line-height:1.5;color:#1e293b;';
+  const color = rechecked ? '#7c3aed' : '#64748b';
+  row.innerHTML = `<div style="font-size:10px;color:${color};margin-bottom:3px">${esc(label)}</div><div dir="auto">${esc(text)}</div>`;
+  finalEl.appendChild(row);
+  finalEl.scrollTop = finalEl.scrollHeight;
+  if (empty) empty.style.display = 'none';
+}
+
+// Gemini Live gives a quick transcript per utterance, but in a Persian/French
+// session it often writes Persian numbers and English names in the wrong
+// alphabet or language ("بیست و چهار" -> "pistonchare"). Every answer in a
+// non-English session is therefore re-transcribed from the recorded audio with
+// Gemini (js/gemini-transcribe.js). In an English session this only happens
+// when the quick transcript contains Persian script.
+async function aaImproveTranscript(quickText) {
+  const session = _aa.language || 'en-US';
+  // Speech start is detected from voice energy; if a quiet voice was missed,
+  // use everything heard since the avatar stopped speaking (max 20 s).
+  const now = Date.now();
+  const fallbackStart = Math.max(_aa.geminiMicQuietUntil || 0, now - 20000);
+  const startedAt = _aa.utteranceStartAt ? _aa.utteranceStartAt - 600 : fallbackStart;
   _aa.utteranceStartAt = 0;
   _aa.utteranceMinConfidence = undefined;
-  if (typeof aaGeminiTranscribe !== 'function' || !startedAt) return azureText;
 
-  const session = _aa.language || 'en-US';
-  const foreignHeard = (_aa.shadowForeignPartialAt || 0) >= startedAt - 1000;
-  const lowConfidence = typeof minConfidence === 'number' && minConfidence < 0.8;
-  if (session === 'en-US' && !foreignHeard && !lowConfidence) return azureText;
-
-  const wav = aaMicRingWav(startedAt - 600, Date.now());
-  if (!wav) return azureText;
-
-  aaSetPhase(AA_PHASE.ANALYZING, 'Transcribing mixed-language answer');
-  const result = await aaGeminiTranscribe(wav);
-  if (!result) return azureText;
-  // In an English session an English result adds nothing: keep Azure's text.
-  if (session === 'en-US' && result.language === 'en-US') return azureText;
-
-  const finalEl = document.getElementById('aa-transcript-final');
-  if (finalEl) {
-    const row = document.createElement('div');
-    row.style.cssText = 'padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:14px;line-height:1.5;color:#1e293b;';
-    row.innerHTML = `<div style="font-size:10px;color:#7c3aed;margin-bottom:3px">Gemini · mixed-language transcript</div><div dir="auto">${esc(result.transcript)}</div>`;
-    finalEl.appendChild(row);
-    finalEl.scrollTop = finalEl.scrollHeight;
+  const needsRecheck = session !== 'en-US' || /[\u0600-\u06FF]/.test(quickText);
+  if (!needsRecheck || typeof aaGeminiTranscribe !== 'function' || typeof aaMicRingWav !== 'function') {
+    aaShowFinalTranscript(quickText, session, false);
+    return quickText;
   }
-  console.log('[Mixed-language STT] Azure:', azureText, '→ Gemini:', result.transcript, `(${result.language})`);
+
+  const wav = aaMicRingWav(startedAt, now);
+  if (!wav) {
+    aaShowFinalTranscript(quickText, session, false);
+    return quickText;
+  }
+
+  aaSetPhase(AA_PHASE.ANALYZING, 'Transcribing the answer');
+  const live = document.getElementById('aa-transcript-live');
+  if (live) { live.textContent = '⏳ Transcribing…'; live.style.display = 'block'; }
+
+  const result = await aaGeminiTranscribe(wav, 7000, [session, ...AA_SWITCH_DETECT_LANGUAGES]);
+  if (!result?.transcript) {
+    aaShowFinalTranscript(quickText, session, false);
+    return quickText;
+  }
+  console.log('[Mixed-language STT] quick:', quickText, '→ Gemini:', result.transcript, `(${result.language})`);
+  aaShowFinalTranscript(result.transcript, `${result.language || session} · checked by Gemini`, true);
   return result.transcript;
 }
 
@@ -796,8 +822,12 @@ function aaSetTranscript(partial = '', finalText = '', detectedLanguage = '') {
     live.textContent = partial || '';
     live.style.display = partial ? 'block' : 'none';
   }
-  if (finalEl && finalText) {
+  // The same sentence is reported when it is heard and again when the answer
+  // is complete; show it once.
+  const lastRowText = finalEl?.lastElementChild?.dataset?.text || '';
+  if (finalEl && finalText && finalText !== lastRowText) {
     const row = document.createElement('div');
+    row.dataset.text = finalText;
     row.style.cssText = 'padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:14px;line-height:1.5;color:#1e293b;';
     const langPrefix = detectedLanguage ? `<div style="font-size:10px;color:#64748b;margin-bottom:3px">${esc(detectedLanguage)}</div>` : '';
     row.innerHTML = `${langPrefix}<div>${esc(finalText)}</div>`;
@@ -818,21 +848,7 @@ function aaDetectedLanguageFromText(text, detected) {
 }
 
 function aaDetectedLanguageFromResult(result) {
-  try {
-    if (SpeechSDK.AutoDetectSourceLanguageResult?.fromResult) {
-      const detected = SpeechSDK.AutoDetectSourceLanguageResult.fromResult(result);
-      if (detected?.language) return detected.language;
-    }
-  } catch (_) {}
-
-  try {
-    const props = result?.properties;
-    const key = SpeechSDK.PropertyId?.SpeechServiceConnection_AutoDetectSourceLanguageResult;
-    const value = key ? props?.getProperty(key) : '';
-    if (value) return value;
-  } catch (_) {}
-
-  return '';
+  return '';   // language comes from the transcript (aaDetectedLanguageFromText)
 }
 
 function aaClearTranscript() {
@@ -895,76 +911,7 @@ function aaStopAvatarSpeech() {
   });
 }
 
-function aaCreateRecognizer(languageCode, settings) {
-  // MAIN recognizer: fixed to the current session language for better short-answer accuracy.
-  const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
-    settings.speechKey,
-    settings.speechRegion
-  );
 
-  speechConfig.speechRecognitionLanguage =
-    aaLanguageConfig(languageCode).recognitionLanguage || languageCode || 'en-US';
-
-  try {
-    speechConfig.outputFormat = SpeechSDK.OutputFormat.Detailed;
-    speechConfig.setProperty(
-      'SpeechServiceConnection_InitialSilenceTimeoutMs',
-      String(AA_INITIAL_SILENCE_MS)
-    );
-    speechConfig.setProperty(
-      'Speech_SegmentationSilenceTimeoutMs',
-      String(AA_END_SILENCE_MS)
-    );
-  } catch (_) {}
-
-  const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-  return new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
-}
-
-function aaCreateLanguageSwitchRecognizer(settings) {
-  // SHADOW recognizer: multilingual, but NEVER used as the normal answer transcript.
-  // Its only job is to detect requests such as "فارسی صحبت کن" or
-  // "من انگلیسی بلد نیستم" while the main recognizer remains fixed to English.
-  const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
-    settings.speechKey,
-    settings.speechRegion
-  );
-
-  try {
-    speechConfig.outputFormat = SpeechSDK.OutputFormat.Detailed;
-    speechConfig.setProperty(
-      'SpeechServiceConnection_InitialSilenceTimeoutMs',
-      String(AA_INITIAL_SILENCE_MS)
-    );
-    speechConfig.setProperty(
-      'Speech_SegmentationSilenceTimeoutMs',
-      '1200'
-    );
-    speechConfig.setProperty(
-      SpeechSDK.PropertyId?.SpeechServiceConnection_LanguageIdMode ||
-        'SpeechServiceConnection_LanguageIdMode',
-      'Continuous'
-    );
-  } catch (_) {}
-
-  const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-
-  if (
-    SpeechSDK.AutoDetectSourceLanguageConfig?.fromLanguages &&
-    SpeechSDK.SpeechRecognizer?.FromConfig
-  ) {
-    const autoDetectConfig =
-      SpeechSDK.AutoDetectSourceLanguageConfig.fromLanguages(AA_SWITCH_DETECT_LANGUAGES);
-
-    return SpeechSDK.SpeechRecognizer.FromConfig(
-      speechConfig,
-      autoDetectConfig,
-      audioConfig
-    );
-  }
-
-  throw new Error('Azure Speech auto language detection is unavailable in this browser SDK.');
-}
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1025,7 +972,7 @@ function aaFinishListenWaiter() {
     'en-US';
 
   if (transcript) {
-    aaSetTranscript('', transcript, _aa.lastDetectedLanguage);
+    aaSetTranscript(transcript, '', _aa.lastDetectedLanguage);
     aaSetPhase(AA_PHASE.ANALYZING, 'Routing response…');
   }
 
@@ -1130,7 +1077,7 @@ function aaFinishBargeCapture() {
       aaSetPhase(AA_PHASE.ANALYZING, 'Routing response…');
     }
 
-    aaSetTranscript('', transcript, _aa.lastDetectedLanguage);
+    aaSetTranscript(transcript, '', _aa.lastDetectedLanguage);
   }
 
   if (typeof capture.resolveDone === 'function') {
@@ -1253,24 +1200,18 @@ async function aaHandlePersistentRecognizing(event) {
   aaSetTranscript(text, '', _aa.preListenLanguage);
 }
 
+// Kept for compatibility: { result: { text } } -> aaHandleFinalTranscript(text).
 function aaHandlePersistentRecognized(event) {
+  aaHandleFinalTranscript(event?.result?.text || '');
+}
+
+function aaHandleFinalTranscript(rawText) {
   aaEnsurePersistentState();
 
-  if (
-    event.result?.reason !== SpeechSDK.ResultReason.RecognizedSpeech ||
-    !event.result?.text
-  ) {
-    return;
-  }
-
-  const text = event.result.text.trim();
+  const text = String(rawText || '').trim();
   if (!text) return;
   if (aaGeminiMicGuard(text)) return;
   if (!_aa.utteranceStartAt) _aa.utteranceStartAt = Date.now() - 1500;
-  try {
-    const conf = JSON.parse(event.result.json || '{}').NBest?.[0]?.Confidence;
-    if (typeof conf === 'number') _aa.utteranceMinConfidence = Math.min(_aa.utteranceMinConfidence ?? 1, conf);
-  } catch (_) {}
 
   const detected = _aa.language || 'en-US';
 
@@ -1295,7 +1236,7 @@ function aaHandlePersistentRecognized(event) {
 
     capture.finalParts.push(text);
     capture.latestPartial = '';
-    aaSetTranscript('', text, capture.detectedLanguage);
+    aaSetTranscript(text, '', capture.detectedLanguage);
     aaRestartBargeEndTimer();
     return;
   }
@@ -1306,7 +1247,7 @@ function aaHandlePersistentRecognized(event) {
 
     waiter.finalParts.push(text);
     waiter.latestPartial = '';
-    aaSetTranscript('', text, waiter.detectedLanguage);
+    aaSetTranscript(text, '', waiter.detectedLanguage);
     aaRestartListenEndTimer();
     return;
   }
@@ -1315,7 +1256,7 @@ function aaHandlePersistentRecognized(event) {
   _aa.preListenFinal.push(text);
   _aa.preListenPartial = '';
   if (detected) _aa.preListenLanguage = detected;
-  aaSetTranscript('', text, _aa.preListenLanguage);
+  aaSetTranscript(text, '', _aa.preListenLanguage);
 }
 
 async function aaStartPersistentRecognizer(languageCode = 'en-US') {
@@ -1323,62 +1264,31 @@ async function aaStartPersistentRecognizer(languageCode = 'en-US') {
 
   if (_aa.persistentRecognizerStarted && _aa.persistentRecognizer) return;
 
-  const settings = loadSettings();
-  const recognizer = aaCreateRecognizer(languageCode, settings);
-
-  _aa.persistentRecognizer = recognizer;
-  _aa.mainRecognizerLanguage = languageCode || 'en-US';
-
-  recognizer.recognizing = (_, event) => {
-    aaHandlePersistentRecognizing(event).catch(error =>
-      console.warn('[Client Intake STT] recognizing handler:', error)
-    );
-  };
-
-  recognizer.recognized = (_, event) => {
-    try {
-      aaHandlePersistentRecognized(event);
-    } catch (error) {
-      console.warn('[Client Intake STT] recognized handler:', error);
-    }
-  };
-
-  recognizer.canceled = (_, event) => {
-    console.warn(
-      '[Client Intake STT] Persistent recognizer canceled:',
-      event?.errorDetails || event?.reason || ''
-    );
-
-    _aa.persistentRecognizerStarted = false;
-
-    if (_aa.listenWaiter && !_aa.listenWaiter.finished) {
-      aaFinishListenWaiter();
-    }
-  };
-
-  recognizer.sessionStopped = () => {
-    console.warn('[Client Intake STT] Persistent recognizer session stopped.');
-    _aa.persistentRecognizerStarted = false;
-
-    if (_aa.listenWaiter && !_aa.listenWaiter.finished) {
-      aaFinishListenWaiter();
-    }
-  };
-
-  await new Promise((resolve, reject) => {
-    recognizer.startContinuousRecognitionAsync(
-      () => {
-        _aa.persistentRecognizerStarted = true;
-        console.log(
-          '[Client Intake STT] Main fixed-language recognizer started:',
-          _aa.mainRecognizerLanguage
-        );
-        if (typeof aaMicRingStart === 'function') aaMicRingStart();
-        resolve();
-      },
-      reject
-    );
+  // Gemini Live speech-to-text (js/gemini-live-stt.js). It detects the end of
+  // each utterance itself and returns the transcript about 0.5 s later, in
+  // whatever language the client speaks.
+  const stt = new GeminiLiveStt({
+    // Session language + English/Persian/French, so language-switch requests
+    // are understood too.
+    languageCodes: [languageCode || 'en-US', ...AA_SWITCH_DETECT_LANGUAGES],
+    onFinal: text => {
+      try {
+        aaHandleFinalTranscript(text);
+      } catch (error) {
+        console.warn('[Gemini STT] transcript handler:', error);
+      }
+    },
+    onSpeechStart: at => {
+      if (!_aa.utteranceStartAt && !aaGeminiMicGuard('')) _aa.utteranceStartAt = at - 300;
+    },
+    onError: error => console.warn('[Gemini STT]', error)
   });
+
+  _aa.persistentRecognizer = stt;
+  _aa.mainRecognizerLanguage = languageCode || 'en-US';
+  await stt.start();
+  _aa.persistentRecognizerStarted = true;
+  console.log('[Gemini STT] Listening started');
 }
 
 async function aaStopPersistentRecognizer() {
@@ -1404,30 +1314,11 @@ async function aaStopPersistentRecognizer() {
   _aa.preListenPartial = '';
   _aa.preListenLanguage = '';
 
-  const recognizer = _aa.persistentRecognizer;
+  const stt = _aa.persistentRecognizer;
   _aa.persistentRecognizer = null;
   _aa.persistentRecognizerStarted = false;
   _aa.mainRecognizerLanguage = '';
-
-  if (!recognizer) return;
-
-  await new Promise(resolve => {
-    try {
-      recognizer.stopContinuousRecognitionAsync(
-        () => {
-          try { recognizer.close(); } catch (_) {}
-          resolve();
-        },
-        () => {
-          try { recognizer.close(); } catch (_) {}
-          resolve();
-        }
-      );
-    } catch (_) {
-      try { recognizer.close(); } catch (_) {}
-      resolve();
-    }
-  });
+  if (stt) { try { stt.stop(); } catch (_) {} }
 }
 
 
@@ -1475,10 +1366,7 @@ async function aaHandleSwitchRecognizerPartial(event) {
 async function aaEvaluateSwitchRecognizerFinal(event) {
   aaEnsurePersistentState();
 
-  if (
-    event.result?.reason !== SpeechSDK.ResultReason.RecognizedSpeech ||
-    !event.result?.text
-  ) return;
+  if (!event.result?.text) return;
 
   const text = event.result.text.trim();
   if (!text) return;
@@ -1542,82 +1430,18 @@ async function aaEvaluateSwitchRecognizerFinal(event) {
 }
 
 async function aaStartLanguageSwitchDetector() {
+  // Gemini transcribes every language, so language-switch requests are found
+  // in the normal transcript (aaHandleLanguageSwitch). Nothing to start.
   aaEnsurePersistentState();
-  if (_aa.switchRecognizerStarted && _aa.switchRecognizer) return;
-
-  const settings = loadSettings();
-  const recognizer = aaCreateLanguageSwitchRecognizer(settings);
-  _aa.switchRecognizer = recognizer;
-
-  recognizer.recognizing = (_, event) => {
-    aaHandleSwitchRecognizerPartial(event).catch(error =>
-      console.warn('[Language Switch Detector] partial handler:', error)
-    );
-  };
-
-  recognizer.recognized = (_, event) => {
-    aaEvaluateSwitchRecognizerFinal(event).catch(error =>
-      console.warn('[Language Switch Detector] final handler:', error)
-    );
-  };
-
-  recognizer.canceled = (_, event) => {
-    console.warn(
-      '[Language Switch Detector] canceled:',
-      event?.errorDetails || event?.reason || ''
-    );
-    _aa.switchRecognizerStarted = false;
-  };
-
-  recognizer.sessionStopped = () => {
-    console.warn('[Language Switch Detector] session stopped.');
-    _aa.switchRecognizerStarted = false;
-  };
-
-  await new Promise((resolve, reject) => {
-    recognizer.startContinuousRecognitionAsync(
-      () => {
-        _aa.switchRecognizerStarted = true;
-        console.log(
-          '[Language Switch Detector] started:',
-          AA_SWITCH_DETECT_LANGUAGES.join(', ')
-        );
-        resolve();
-      },
-      reject
-    );
-  });
 }
 
 async function aaStopLanguageSwitchDetector() {
   aaEnsurePersistentState();
-
-  const recognizer = _aa.switchRecognizer;
   _aa.switchRecognizer = null;
   _aa.switchRecognizerStarted = false;
   _aa.switchCheckBusy = false;
   _aa.switchSpeechStartedAt = 0;
   _aa.pendingLanguageSwitch = null;
-
-  if (!recognizer) return;
-
-  await new Promise(resolve => {
-    try {
-      recognizer.stopContinuousRecognitionAsync(
-        () => {
-          try { recognizer.close(); } catch (_) {}
-          resolve();
-        },
-        () => {
-          try { recognizer.close(); } catch (_) {}
-          resolve();
-        }
-      );
-    } catch (_) {
-      try { recognizer.close(); } catch (_) {}
-      resolve();
-    }
-  });
 }
 
 async function aaSpeakLocalizedPersistent(message, languageCode, options = {}) {
@@ -1673,6 +1497,7 @@ async function aaSpeakLocalizedPersistent(message, languageCode, options = {}) {
 
   _aa.currentAvatarText = message;
   _aa.avatarSpeaking = true;
+  if (_aa.persistentRecognizer?.setMuted) _aa.persistentRecognizer.setMuted(true);
   _aa.utteranceStartAt = 0;
   _aa.utteranceMinConfidence = undefined;
   aaSetPhase(AA_PHASE.SPEAKING, message);
@@ -1693,6 +1518,8 @@ async function aaSpeakLocalizedPersistent(message, languageCode, options = {}) {
     _aa.geminiMicQuietUntil = now + AA_GEMINI_MIC_TAIL_MS;
     _aa.geminiEchoWindowUntil = now + AA_GEMINI_ECHO_WINDOW_MS;
     _aa.geminiLastSpokenText = message;
+    const stt = _aa.persistentRecognizer;
+    if (stt?.setMuted) setTimeout(() => { if (!_aa.avatarSpeaking) stt.setMuted(false); }, AA_GEMINI_MIC_TAIL_MS);
     // Anything buffered while she was speaking is her own voice, not an answer.
     _aa.preListenFinal = [];
     _aa.preListenPartial = '';
@@ -1832,8 +1659,10 @@ async function aaAutoStart() {
   const token = _aa.loopToken;
 
   const settings = loadSettings();
-  const gemini = typeof useGeminiAvatar === 'function' && useGeminiAvatar(settings);
-  const avatarName = gemini ? (settings.geminiAvatarName || 'Kira') : 'Lisa';
+  const gemini = true;   // the Azure avatar is no longer used
+  // The avatar always introduces itself as Lisa. settings.geminiAvatarName
+  // (e.g. Kira) only selects which Gemini avatar face is shown.
+  const avatarName = 'Lisa';
 
   aaSetPhase(AA_PHASE.STARTING, `Connecting to ${avatarName}`);
   aaUpdateProgressUi();
@@ -1874,108 +1703,6 @@ async function aaAutoStart() {
     return;
   }
 
-  if (!settings.avatarKey || !settings.avatarRegion || !settings.avatarResourceName) {
-    _aa.starting = false;
-    aaShowError('Configure Azure Speech Resource Name, Region, and API Key first.');
-    return;
-  }
-
-  try {
-    const relayData = await fetchAvatarRelayToken(settings);
-    const ice = normalizeAvatarIceInfo(relayData);
-
-    _aa.peer = new RTCPeerConnection({
-      iceServers: [{ urls: [ice.turnUrl], username: ice.username, credential: ice.credential }]
-    });
-
-    _aa.peer.ontrack = event => {
-      if (event.track.kind === 'video') {
-        const host = document.getElementById('aa-remote-video');
-        let video = document.getElementById('aa-video');
-        if (!video) {
-          video = document.createElement('video');
-          video.id = 'aa-video';
-          video.autoplay = true;
-          video.playsInline = true;
-          video.muted = true;
-          video.style.cssText =
-            'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:center center;background:#fff;';
-          host.appendChild(video);
-        }
-        video.srcObject = event.streams[0];
-        video.play().catch(error => console.warn('[AI Assistant Video]', error));
-        const overlay = document.getElementById('aa-overlay');
-        if (overlay) overlay.style.display = 'none';
-      }
-
-      if (event.track.kind === 'audio') {
-        const audioEl = document.getElementById('aa-audio');
-        if (!audioEl) return;
-        audioEl.srcObject = event.streams[0];
-        audioEl.autoplay = true;
-        audioEl.muted = false;
-        audioEl.volume = 1;
-        const play = () => audioEl.play().catch(() => {});
-        audioEl.onloadedmetadata = play;
-        audioEl.oncanplay = play;
-        setTimeout(play, 250);
-      }
-    };
-
-    _aa.peer.addTransceiver('video', { direction: 'sendrecv' });
-    _aa.peer.addTransceiver('audio', { direction: 'sendrecv' });
-
-    const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
-      settings.avatarKey,
-      settings.avatarRegion
-    );
-    speechConfig.speechSynthesisLanguage = 'en-US';
-    speechConfig.speechSynthesisVoiceName = settings.avatarVoice || 'en-US-LunaNeural';
-
-    const avatarConfig = new SpeechSDK.AvatarConfig(settings.avatarCharacter || 'lisa', settings.avatarStyle || 'casual-sitting');
-    avatarConfig.backgroundColor = '#FFFFFFFF';
-
-    _aa.synth = new SpeechSDK.AvatarSynthesizer(speechConfig, avatarConfig);
-    const startResult = await _aa.synth.startAvatarAsync(_aa.peer);
-
-    if (startResult.reason !== SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
-      const details = SpeechSDK.CancellationDetails.fromResult(startResult);
-      throw new Error(details.errorDetails || 'Avatar connection failed.');
-    }
-
-    if (token !== _aa.loopToken) return;
-
-    _aa.active = true;
-    _aa.starting = false;
-    aaResetQuestionRuntime(_aa.questions[0]);
-
-    await aaWaitForAudioReady();
-
-    // MAIN STT stays fixed to the session language for accurate short answers.
-    await aaStartPersistentRecognizer(_aa.language);
-
-    // SHADOW STT uses auto language detection only to catch language-switch requests.
-    // It never supplies normal intake answers to the LLM.
-    try {
-      await aaStartLanguageSwitchDetector();
-    } catch (error) {
-      console.warn('[Language Switch Detector] Could not start; main STT will continue.', error);
-    }
-
-    await aaSpeakLocalized(
-      "Hello, and welcome. I'm Lisa",
-      'en-US',
-      { leadingPauseMs: 350 }
-    );
-
-    await aaSpeakEnglishPrompt(_aa.question.question);
-    await aaConversationLoop(token);
-  } catch (error) {
-    console.error('[AI Assistant V2]', error);
-    _aa.starting = false;
-    _aa.active = false;
-    aaShowError(error.message || 'Unable to start the AI Assistant.');
-  }
 }
 
 function aaStop() {
