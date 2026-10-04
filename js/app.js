@@ -4751,8 +4751,9 @@ async function listenForAnswer(previousText = '') {
         // Gemini Live writes English words inside Persian speech in Persian
         // letters; re-transcribe the recording so names, numbers and postal
         // codes come out in Latin characters (js/gemini-transcribe.js).
-        if (captured && /[\u0600-\u06FF]/.test(captured) &&
-            typeof aaGeminiTranscribe === 'function' && typeof aaMicRingWav === 'function') {
+        const recheck = captured && (interviewLanguage !== 'en-US' || /[\u0600-\u06FF]/.test(captured) ||
+          (typeof aaLooksLikeEnglish === 'function' && !aaLooksLikeEnglish(captured)));
+        if (recheck && typeof aaGeminiTranscribe === 'function' && typeof aaMicRingWav === 'function') {
           const wav = aaMicRingWav(startedAt, Date.now());
           const better = wav ? await aaGeminiTranscribe(wav, 7000, [interviewLanguage, 'en-US']) : null;
           if (better?.transcript) captured = better.transcript;

@@ -478,7 +478,8 @@ async function aaImproveTranscript(quickText) {
   _aa.utteranceStartAt = 0;
   _aa.utteranceMinConfidence = undefined;
 
-  const needsRecheck = session !== 'en-US' || /[\u0600-\u06FF]/.test(quickText);
+  const needsRecheck = session !== 'en-US' || /[\u0600-\u06FF]/.test(quickText) ||
+    (typeof aaLooksLikeEnglish === 'function' && !aaLooksLikeEnglish(quickText));
   if (!needsRecheck || typeof aaGeminiTranscribe !== 'function' || typeof aaMicRingWav !== 'function') {
     aaShowFinalTranscript(quickText, session, false);
     return quickText;
