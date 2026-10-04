@@ -2,7 +2,7 @@
 
 AI-assisted client intake for caseworkers. An intake form is turned into a question bank, the client is interviewed by voice (in their own language, by a caseworker or by a talking avatar), every answer is checked and confirmed with the client, and the approved data is mapped to CRM fields and sent to a Mock CRM.
 
-Hackathon prototype: plain HTML/JavaScript pages plus a small Python server. **All AI runs on Google Cloud (Gemini on Vertex AI, Gemini Live, Gemini-TTS, Document AI). No Azure services are used.**
+Hackathon prototype: plain HTML/JavaScript pages plus a small Python server. **All AI runs on Google Cloud (Gemini on Vertex AI, Gemini Live, Gemini-TTS, Document AI). **
 
 ## Run
 
@@ -19,7 +19,7 @@ Always use the app through `http://localhost:5512/`; opening the HTML files dire
 | Landing page | `index.html` | Product overview and entry point. |
 | Question Engine | `question-engine.html` | Upload an intake form (PDF, Word, Excel, PowerPoint, HTML, images). Document AI extracts the text; Gemini extracts only the questions that are actually in the document. |
 | Question Bank | `question-bank.html` | Review and edit the extracted questions. |
-| Translation Engine | `translation.html` | Translate the questions into interview languages (Persian, French, Arabic, Spanish, …) and edit the translations. |
+| Translation Engine | `translation.html` | Translate the questions into interview languages (Persian, French, Arabic, Spanish etc) and edit the translations. |
 | ID Scan | `id-scan.html` | Upload the client's ID (passport, PR card, licence…). Gemini reads name, date of birth, document number, expiry, etc. The name and date of birth are used in Responses and sent to the CRM (`fullname`, `birthdate`). The ID image is never stored. |
 | Client Intake | `interview.html` | Caseworker-led interview. **Play Question** reads the question (Gemini voice), **Speak / Stop** records the answer; analysis starts automatically after Stop. |
 | Virtual Caseworker | `ai-assistant.html` | Fully automatic interview with **Lisa**, a Gemini Live video avatar: she asks each question, listens, asks follow-ups and confirms every answer. |
