@@ -18,5 +18,25 @@
     },
     "clientId": "CRM-1001",
     "createdAt": "2026-10-03T02:06:29.446965+00:00"
+  },
+  {
+    "address1_line1": "45 Marine",
+    "address1_line2": "1609",
+    "address1_city": "West Vancouver",
+    "address1_stateorprovince": "British Columbia",
+    "address1_postalcode": "V7T 1A8",
+    "address1_country": "Canada",
+    "firstarrivaldate": "2022-08-22",
+    "familystatuscode": "Married",
+    "numberofchildren": 1,
+    "fullname": "",
+    "crm_metadata": {
+      "source": "AI Caseworker Intake",
+      "status": "Approved",
+      "reviewedBy": "Caseworker",
+      "approvedAt": "2026-10-04T06:06:05.979Z"
+    },
+    "clientId": "CRM-1002",
+    "createdAt": "2026-10-04T06:06:05.984961+00:00"
   }
 ]

@@ -2892,25 +2892,63 @@ async function translateClientSpeechToEnglish(text) {
   const clean = String(text || '').trim();
   if (!clean) return '';
   if (!/[^\x00-\x7F]/.test(clean)) return clean;   // plain ASCII: already English
-  const out = await callGPT(SYSTEM_TRANSLATE_CLIENT_SPEECH, `Client's words:\n${clean}`, true);
+
+  // Direct request with low thinking: ~2-3 s instead of ~8 s through callGPT().
+  const s = loadSettings();
+  const model = (s.geminiModel || GEMINI_DEFAULT_MODEL).trim();
+  const res = await fetch('/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      projectId: s.gcpProjectId,
+      location: s.geminiLocation || 'global',
+      model,
+      credentialsFile: s.gcpCredentialsFile || 'google-service-account.json',
+      request: {
+        systemInstruction: { parts: [{ text: SYSTEM_TRANSLATE_CLIENT_SPEECH }] },
+        contents: [{ role: 'user', parts: [{ text: `Client's words:\n${clean}` }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          thinkingConfig: /^gemini-3/.test(model) ? { thinkingLevel: 'low' } : { thinkingBudget: 0 }
+        }
+      }
+    })
+  });
+  if (!res.ok) throw new Error(`Gemini ${res.status}`);
+  const data = await res.json();
+  const raw = data.candidates?.[0]?.content?.parts?.map(x => x.text || '').join('') || '';
+  const out = JSON.parse(raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));
   return String(out?.englishTranslation || '').trim();
 }
+
+// Question ids whose English translation is being made right now (shown as
+// "Translating..." on the Responses page).
+const _translationPending = new Set();
 
 // Translates in the background and patches the saved response, so saving and
 // moving to the next question are not delayed.
 function updateSavedResponseTranslation(questionId, speech) {
   const clean = String(speech || '').trim();
   if (!questionId || !clean) return;
+  const refresh = () => {
+    if (document.getElementById('responses-content') && typeof renderResponses === 'function') renderResponses();
+  };
+  _translationPending.add(questionId);
   translateClientSpeechToEnglish(clean).then(translation => {
-    if (!translation) return;
+    _translationPending.delete(questionId);
+    if (!translation) { refresh(); return; }
     const rs = loadResponses();
     const r = rs.find(x => x.questionId === questionId);
     if (!r || String(r.detectedClientSpeech || '').trim() !== clean) return;   // answer changed meanwhile
     r.englishTranslation = translation;
     r.englishInterpretation = translation;
     persistResponses(rs);
-    if (document.getElementById('responses-content') && typeof renderResponses === 'function') renderResponses();
-  }).catch(e => console.warn('[Translation] Could not translate the saved answer:', e.message || e));
+    refresh();
+  }).catch(e => {
+    _translationPending.delete(questionId);
+    console.warn('[Translation] Could not translate the saved answer:', e.message || e);
+    refresh();
+  });
 }
 
 // Repairs answers saved before the fix above: an "English Translation" that
@@ -3659,7 +3697,9 @@ function renderResponses() {
 
   const rows = rs.map((r, i) => {
     const speech = responseSpeech(r) || '—';
-    const translation = responseEnglishTranslation(r) || '—';
+    const translation = _translationPending.has(r.questionId)
+      ? '⏳ Translating to English…'
+      : (responseEnglishTranslation(r) || '—');
     const explanation = responseMappingExplanation(r) || '—';
 
     return `
