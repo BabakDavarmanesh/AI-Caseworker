@@ -18,7 +18,7 @@ async function loadIntakeRules() {
 const EMBEDDED_INTAKE_RULES = {
   fields: {
     full_name: {
-      matchQuestions: ["what is your full name", "full name"],
+      matchQuestions: ["what is your full name", "full name", "what is your name"],
       answerType: "person_name", required: true,
       confirmationRequired: true, spellingRequired: true,
       components: ["firstName","middleName","lastName"],
@@ -146,13 +146,21 @@ const DEFAULT_SETTINGS = {
   speechRegion:      '',
   speechKey:         '',
   speechVoice:       'en-US-LunaNeural',
+  voiceProvider:     'google',            // 'google' = Gemini-TTS, 'azure' = Azure Speech neural voice
+  googleTtsModel:    'gemini-2.5-flash-tts',
+  googleTtsVoice:    'Kore',
   avatarResourceName:'ai-caseworker-avatar',
   avatarEndpoint:    'https://francecentral.api.cognitive.microsoft.com/',
   avatarRegion:      'francecentral',
   avatarKey:         '',
   avatarCharacter:   'lisa',
   avatarStyle:       'casual-sitting',
-  avatarVoice:       'en-US-LunaNeural'
+  avatarVoice:       'en-US-LunaNeural',
+  avatarProvider:    'azure',              // 'azure' = Lisa, 'gemini' = Gemini Live avatar
+  geminiAvatarName:  'Kira',
+  geminiAvatarVoice: 'zephyr',
+  geminiLiveModel:   'gemini-3.8-live',
+  geminiLiveLocation:'us-central1'
 };
 
 function loadSettings() {
@@ -172,10 +180,28 @@ function loadSettings() {
   }
 }
 function loadQuestions()    { try { return JSON.parse(localStorage.getItem(LS.questions) || '[]');  } catch { return []; } }
-function loadResponses()    { try { return JSON.parse(localStorage.getItem(LS.responses) || '[]');  } catch { return []; } }
+function loadResponses()    { try { return latestResponsePerQuestion(JSON.parse(localStorage.getItem(LS.responses) || '[]')); } catch { return []; } }
+
+// One response per question: when the same question was answered more than
+// once (e.g. a new intake session, or a regenerated question bank with new
+// ids), only the most recent answer is kept.
+function latestResponsePerQuestion(rs) {
+  if (!Array.isArray(rs)) return [];
+  const keyOf = r => String(r.question || r.questionId || r.id || '')
+    .toLowerCase().replace(/[^a-z0-9؀-ۿ]+/g, ' ').trim();
+  const timeOf = r => Date.parse(r.answeredAt || r.timestamp || '') || 0;
+  const newest = new Map();
+  rs.forEach((r, i) => {
+    const k = keyOf(r) || `#${i}`;
+    const prev = newest.get(k);
+    if (!prev || timeOf(r) >= timeOf(prev.r)) newest.set(k, { r, i });
+  });
+  const keep = new Set([...newest.values()].map(v => v.i));
+  return rs.filter((_, i) => keep.has(i));
+}
 function persistSettings(d) { localStorage.setItem(LS.settings,  JSON.stringify(d)); }
 function persistQuestions(q){ localStorage.setItem(LS.questions, JSON.stringify(q)); }
-function persistResponses(r){ localStorage.setItem(LS.responses, JSON.stringify(r)); }
+function persistResponses(r){ localStorage.setItem(LS.responses, JSON.stringify(latestResponsePerQuestion(r))); }
 
 // ─── Navigation ───────────────────────────────────────────────
 // [show() -> see below]
@@ -998,6 +1024,9 @@ CRITICAL RULES:
    - open text -> concise normalized text
    - normalizedValue must always be written in English, whatever language the client spoke (keep proper names; write them in Latin letters).
    If a reliable mapped value cannot be determined, use an empty string and set isAnswerComplete=false.
+16. PLAUSIBILITY: Today's date is supplied. A date of birth or any past event (arrival, marriage, graduation, etc.) can NEVER be in the future, and the date must exist on the calendar (no 31 February). If the date is impossible, set isAnswerComplete=false and ask the client to repeat the date. Never "fix" an impossible date yourself.
+17. NAMES: Never guess or substitute a person's name. If the transcript does not clearly contain a name (e.g. it looks like random words or a misrecognition), set isAnswerComplete=false and ask the client to repeat and spell the name.
+18. CORRECTIONS: When the client's later turns correct earlier turns, the latest turn wins. If a note says the client rejected a read-back value, do NOT return that value again unless the client explicitly restates it.
 
 Return a JSON object with this EXACT structure:
 {
@@ -1869,10 +1898,10 @@ function buildCorrectionQuestion(ctx, component) {
 // ── Response badges helper ─────────────────────────────────────────────────
 function getResponseBadges(resp) {
   const badges = [];
-  if (resp.isConfirmed) badges.push('<span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">✓ Confirmed</span>');
+  if (resp.isConfirmed) badges.push('<span title="The client said yes when the answer was read back to them" style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">✓ Confirmed</span>');
   if (resp.requiresCaseworkerReview) badges.push('<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">⚠ Review Required</span>');
   if (resp.correctionAttempts > 0) badges.push(`<span style="background:#dbeafe;color:#2563eb;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">✏ Corrected (${resp.correctionAttempts}×)</span>`);
-  if (!resp.isConfirmed && !resp.requiresCaseworkerReview) badges.push('<span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">○ Unconfirmed</span>');
+  if (!resp.isConfirmed && !resp.requiresCaseworkerReview) badges.push('<span title="The answer was never read back to the client (e.g. saved before the confirmation step existed)" style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">○ Unconfirmed</span>');
   if (resp.structuredValue && Object.keys(resp.structuredValue).length > 0) {
     badges.push(`<span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">📋 Structured</span>`);
   }
@@ -1996,6 +2025,34 @@ function avShowWorkflowAnalysis(ctx, latestTranscript) {
       latestTranscript ||
       '';
   }
+}
+
+// Final saved value of a structured workflow answer. Shared by Client Intake and
+// the Virtual Caseworker (it used to live only in client-intake.js, so saving an
+// address on the Virtual Caseworker page failed with "not defined").
+function buildStrictFinalWorkflowAnswer(ctx) {
+  const value = ctx?.structuredValue || {};
+
+  if (ctx?.fieldKey === 'full_name') {
+    // Final answer must contain only first and last name.
+    return [value.firstName, value.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  if (ctx?.fieldKey === 'country_of_birth') {
+    return String(value.country || '').trim();
+  }
+
+  if (ctx?.fieldKey === 'current_address') {
+    return formatAddressForSpeech(value);
+  }
+
+  return formatWorkflowValueForDisplay(ctx) ||
+    ctx?.lastAiResult?.interpretedAnswer ||
+    '';
 }
 
 function formatWorkflowValueForDisplay(ctx) {
@@ -2325,10 +2382,130 @@ Answer type: ${answerType || 'open'}
 Expected answer type/format: ${expectedAnswer || 'open text'}
 Question definition/clarification (use only to explain the original meaning; never introduce alternatives): ${clarificationDefinition || '(not supplied — preserve the ordinary meaning of the original question exactly)'}
 Validation metadata (authoritative; do not weaken it): ${JSON.stringify(validationRules)}
+Today's date (YYYY-MM-DD): ${todayIsoDate()}
 Primary transcript (language: ${answerLanguage}): ${clientAnswer}${langNote}${sttBlock}
 
 Analyze and return JSON.`;
   return callGPT(SYSTEM_ANALYZE_ANSWER, userMsg, true);
+}
+
+// ── Deterministic answer validation + read-back (shared) ───────────────────
+// The LLM decides completeness; these checks catch impossible values it may
+// still accept (e.g. a date of birth in the future) and build the
+// "Is that correct?" read-back used before an answer is saved.
+
+function todayIsoDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const MONTH_NAMES_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function parseIsoDateParts(value) {
+  const m = String(value || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  return { year: +m[1], month: +m[2], day: +m[3] };
+}
+
+function formatIsoDateForSpeech(value) {
+  const p = parseIsoDateParts(value);
+  if (!p || p.month < 1 || p.month > 12) return String(value || '');
+  return `${p.day} ${MONTH_NAMES_EN[p.month - 1]} ${p.year}`;
+}
+
+function isBirthDateQuestion(q) {
+  return /\b(birth|born|dob)\b/i.test(`${q?.question || ''} ${q?.expectedAnswer || ''}`);
+}
+
+// Questions whose date may legitimately be in the future (expiry, plans…).
+function isFutureDateAllowed(q) {
+  return /expir|valid\s+(until|through|to)|\buntil\b|end\s+date|planned|plan\s+to|intend|\bwill\b|future|upcoming|\bnext\b/i
+    .test(`${q?.question || ''} ${q?.expectedAnswer || ''}`);
+}
+
+function isPersonNameQuestion(q) {
+  const text = String(q?.question || '');
+  if (q?.type === 'name') return true;
+  if (['yes_no', 'boolean', 'number', 'date', 'address', 'choice'].includes(q?.type)) return false;
+  if (/^\s*(have|has|did|do|does|are|is|were|was)\b/i.test(text)) return false;
+  if (/(company|employer|school|business|organi[sz]ation|institution|street|city|program|course|user\s*name|file)\s+name/i.test(text)) return false;
+  return /\bname\b/i.test(text);
+}
+
+function answerValueAsText(result) {
+  const v = result?.normalizedValue;
+  if (v && typeof v === 'object') {
+    return Object.values(v).filter(x => x !== '' && x != null).join(' ').trim();
+  }
+  return String(v || result?.interpretedAnswer || '').trim();
+}
+
+// Returns { ok: true } or { ok: false, message, followUp } (English).
+function validateIntakeAnswerValue(q, result) {
+  const value = answerValueAsText(result);
+  const parts = parseIsoDateParts(value);
+
+  if (!parts) {
+    if (q?.type === 'date' && value) {
+      return {
+        ok: false,
+        message: `The date "${value}" is not a complete day, month, and year.`,
+        followUp: 'Could you please tell me the full date — the day, the month, and the year?'
+      };
+    }
+    return { ok: true };
+  }
+
+  const { year, month, day } = parts;
+  const dt = new Date(year, month - 1, day);
+  const isRealDate = dt.getFullYear() === year && dt.getMonth() === month - 1 && dt.getDate() === day;
+  if (!isRealDate) {
+    return {
+      ok: false,
+      message: `"${value}" is not a real calendar date.`,
+      followUp: 'That date does not exist on the calendar. Could you please repeat the date — the day, the month, and the year?'
+    };
+  }
+
+  const spoken = formatIsoDateForSpeech(value);
+  const today = todayIsoDate();
+  const birth = isBirthDateQuestion(q);
+
+  if (value > today && !isFutureDateAllowed(q)) {
+    return {
+      ok: false,
+      message: birth
+        ? `Date of birth ${spoken} is in the future.`
+        : `${spoken} is in the future, but this question asks about a past date.`,
+      followUp: birth
+        ? `I heard ${spoken}, but a date of birth cannot be in the future. Could you please tell me your date of birth again — the day, the month, and the year?`
+        : `I heard ${spoken}, but that date is in the future. Could you please tell me the correct date — the day, the month, and the year?`
+    };
+  }
+
+  if (birth && year < new Date().getFullYear() - 120) {
+    return {
+      ok: false,
+      message: `Date of birth ${spoken} is more than 120 years ago.`,
+      followUp: `I heard ${spoken}, which does not seem right for a date of birth. Could you please tell me your date of birth again — the day, the month, and the year?`
+    };
+  }
+
+  return { ok: true };
+}
+
+// English read-back asked before saving: { value, prompt }.
+function buildAnswerReadback(q, result) {
+  const value = answerValueAsText(result);
+  if (parseIsoDateParts(value)) {
+    const spoken = formatIsoDateForSpeech(value);
+    return { value, prompt: `I have the date as ${spoken}. Is that correct?` };
+  }
+  if (isPersonNameQuestion(q) && /[A-Za-z]/.test(value)) {
+    const spelled = value.split(/\s+/).filter(Boolean).map(spellWord).join(', ');
+    return { value, prompt: `I have the name as ${value}, spelled ${spelled}. Is that correct?` };
+  }
+  return { value, prompt: `I have your answer as: ${value}. Is that correct?` };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -3008,7 +3185,7 @@ function extractIntakeFields(responses = []) {
     postalCode: '',
     country: 'Canada',
     maritalStatus: '',
-    numberOfChildren: 0
+    numberOfChildren: ''
   };
 
   if (!Array.isArray(responses) || !responses.length) {
@@ -3042,7 +3219,7 @@ function extractIntakeFields(responses = []) {
 
     if (fk === 'full_name' || q.includes('full name') || (q.includes('your name') && !q.includes('street'))) {
       if (!fields.fullName) fields.fullName = val;
-    } else if (fk === 'first_arrival_date' || q.includes('arrival date') || q.includes('arrive in canada') || q.includes('landed')) {
+    } else if (fk === 'first_arrival_date' || q.includes('arrival date') || q.includes('arrive in canada') || q.includes('landed') || (q.includes('arriv') && q.includes('canada'))) {
       if (!fields.firstArrivalDateInCanada) fields.firstArrivalDateInCanada = val;
     } else if (fk === 'street_name' || q.includes('street name') || (q.includes('street') && !q.includes('number'))) {
       if (!fields.streetName) fields.streetName = val;
@@ -3054,7 +3231,7 @@ function extractIntakeFields(responses = []) {
       if (!fields.province) fields.province = val;
     } else if (fk === 'postal_code' || q.includes('postal code') || q.includes('postcode') || q.includes('zip')) {
       if (!fields.postalCode) fields.postalCode = val;
-    } else if (fk === 'country' || q.includes('country')) {
+    } else if (fk === 'country' || (q.includes('country') && !q.includes('birth') && !q.includes('citizenship'))) {
       if (!fields.country || fields.country === 'Canada') fields.country = val;
     } else if (fk === 'marital_status' || q.includes('marital') || q.includes('married') || q.includes('single') || q.includes('spouse')) {
       if (!fields.maritalStatus) fields.maritalStatus = val;
@@ -3082,8 +3259,8 @@ function mapIntakeToCrm(fields) {
     familystatuscode: fields.maritalStatus || '',
     numberofchildren: fields.numberOfChildren !== '' && fields.numberOfChildren !== undefined
       ? (isNaN(Number(fields.numberOfChildren)) ? fields.numberOfChildren : Number(fields.numberOfChildren))
-      : 0,
-    fullname: fields.fullName || 'Client Intake',
+      : '',
+    fullname: fields.fullName || '',
     crm_metadata: {
       source: 'AI Caseworker Intake',
       status: 'Approved',
@@ -3120,7 +3297,7 @@ function renderCaseworkerCrmPanel() {
             ${statusBadge}
           </div>
           <div style="font-size:12.5px;color:var(--text-muted);margin-top:2px">
-            Client: <b>${esc(fields.fullName || 'Amir Hosseini')}</b> • 9 Intake fields extracted and prepared for Dynamics CRM mapping.
+            Client: <b>${esc(fields.fullName || 'Name not collected')}</b> • 9 Intake fields extracted and prepared for Dynamics CRM mapping.
           </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -3183,7 +3360,7 @@ function renderCaseworkerCrmPanel() {
             <span>Marital Status & Children</span>
             <span class="crm-target-tag">familystatus / children</span>
           </div>
-          <div class="crm-field-val">${esc(fields.maritalStatus || '—')} • ${esc(String(fields.numberOfChildren))} children</div>
+          <div class="crm-field-val">${esc(fields.maritalStatus || '—')} • ${fields.numberOfChildren === '' ? '—' : esc(String(fields.numberOfChildren))} children</div>
         </div>
       </div>
     </div>`;
@@ -3193,9 +3370,10 @@ function renderCaseworkerCrmPanel() {
 function openCaseworkerReviewModal() {
   const rs = loadResponses();
   if (!rs.length) {
-    loadDemoIntakeResponses();
+    toast('No responses yet — complete a Client Intake first (or load the demo intake).', 'info');
+    return;
   }
-  const fields = extractIntakeFields(loadResponses());
+  const fields = extractIntakeFields(rs);
 
   const elName = document.getElementById('cr-name');
   const elArrival = document.getElementById('cr-arrival');
@@ -3208,16 +3386,18 @@ function openCaseworkerReviewModal() {
   const elMarital = document.getElementById('cr-marital');
   const elChildren = document.getElementById('cr-children');
 
-  if (elName) elName.value = fields.fullName || 'Amir Hosseini';
-  if (elArrival) elArrival.value = fields.firstArrivalDateInCanada || '2023-09-12';
-  if (elStreet) elStreet.value = fields.streetName || 'Robson Street';
-  if (elUnit) elUnit.value = fields.unitNumber || 'Suite 402';
-  if (elCity) elCity.value = fields.city || 'Vancouver';
-  if (elProv) elProv.value = fields.province || 'British Columbia';
-  if (elPostal) elPostal.value = fields.postalCode || 'V6B 2B6';
+  // Only values the client actually gave. Missing fields stay empty for the
+  // caseworker to fill in — never demo data.
+  if (elName) elName.value = fields.fullName || '';
+  if (elArrival) elArrival.value = fields.firstArrivalDateInCanada || '';
+  if (elStreet) elStreet.value = fields.streetName || '';
+  if (elUnit) elUnit.value = fields.unitNumber || '';
+  if (elCity) elCity.value = fields.city || '';
+  if (elProv) elProv.value = fields.province || '';
+  if (elPostal) elPostal.value = fields.postalCode || '';
   if (elCountry) elCountry.value = fields.country || 'Canada';
-  if (elMarital) elMarital.value = fields.maritalStatus || 'Married';
-  if (elChildren) elChildren.value = fields.numberOfChildren !== undefined ? fields.numberOfChildren : 2;
+  if (elMarital) elMarital.value = fields.maritalStatus || '';
+  if (elChildren) elChildren.value = fields.numberOfChildren ?? '';
 
   updateReviewPayloadPreview();
   const modal = document.getElementById('caseworker-review-modal');
@@ -3234,16 +3414,16 @@ function updateReviewPayloadPreview() {
   const getVal = id => (document.getElementById(id)?.value || '').trim();
 
   const current = {
-    fullName: getVal('cr-name') || 'Amir Hosseini',
-    firstArrivalDateInCanada: getVal('cr-arrival') || '2023-09-12',
-    streetName: getVal('cr-street') || 'Robson Street',
-    unitNumber: getVal('cr-unit') || 'Suite 402',
-    city: getVal('cr-city') || 'Vancouver',
-    province: getVal('cr-province') || 'British Columbia',
-    postalCode: getVal('cr-postal') || 'V6B 2B6',
+    fullName: getVal('cr-name'),
+    firstArrivalDateInCanada: getVal('cr-arrival'),
+    streetName: getVal('cr-street'),
+    unitNumber: getVal('cr-unit'),
+    city: getVal('cr-city'),
+    province: getVal('cr-province'),
+    postalCode: getVal('cr-postal'),
     country: getVal('cr-country') || 'Canada',
-    maritalStatus: getVal('cr-marital') || 'Married',
-    numberOfChildren: getVal('cr-children') !== '' ? Number(getVal('cr-children')) : 2
+    maritalStatus: getVal('cr-marital'),
+    numberOfChildren: getVal('cr-children') !== '' ? Number(getVal('cr-children')) : ''
   };
 
   const mapped = mapIntakeToCrm(current);
@@ -3288,16 +3468,16 @@ async function submitCaseworkerApproval() {
 
   const getVal = id => (document.getElementById(id)?.value || '').trim();
   const current = {
-    fullName: getVal('cr-name') || 'Amir Hosseini',
-    firstArrivalDateInCanada: getVal('cr-arrival') || '2023-09-12',
-    streetName: getVal('cr-street') || 'Robson Street',
-    unitNumber: getVal('cr-unit') || 'Suite 402',
-    city: getVal('cr-city') || 'Vancouver',
-    province: getVal('cr-province') || 'British Columbia',
-    postalCode: getVal('cr-postal') || 'V6B 2B6',
+    fullName: getVal('cr-name'),
+    firstArrivalDateInCanada: getVal('cr-arrival'),
+    streetName: getVal('cr-street'),
+    unitNumber: getVal('cr-unit'),
+    city: getVal('cr-city'),
+    province: getVal('cr-province'),
+    postalCode: getVal('cr-postal'),
     country: getVal('cr-country') || 'Canada',
-    maritalStatus: getVal('cr-marital') || 'Married',
-    numberOfChildren: getVal('cr-children') !== '' ? Number(getVal('cr-children')) : 2
+    maritalStatus: getVal('cr-marital'),
+    numberOfChildren: getVal('cr-children') !== '' ? Number(getVal('cr-children')) : ''
   };
 
   const payload = mapIntakeToCrm(current);
@@ -3308,9 +3488,10 @@ async function submitCaseworkerApproval() {
 async function submitCaseworkerApprovalQuick() {
   const rs = loadResponses();
   if (!rs.length) {
-    loadDemoIntakeResponses();
+    toast('No responses yet — complete a Client Intake first (or load the demo intake).', 'info');
+    return;
   }
-  const fields = extractIntakeFields(loadResponses());
+  const fields = extractIntakeFields(rs);
   const payload = mapIntakeToCrm(fields);
   await sendApprovedDataToCrm(payload);
 }
@@ -3404,7 +3585,8 @@ function closeCrmSuccessModal() {
 // RESPONSES — UI
 // ─────────────────────────────────────────────────────────────
 function renderResponses() {
-  const rs = loadResponses();
+  const timeOf = r => Date.parse(r.answeredAt || r.timestamp || '') || 0;
+  const rs = loadResponses().sort((a, b) => timeOf(a) - timeOf(b));
   const el = document.getElementById('responses-content');
 
   // Render top caseworker CRM panel
@@ -3423,13 +3605,11 @@ function renderResponses() {
     return;
   }
 
-  const currentCrmId = localStorage.getItem('aic_current_crm_client_id');
 
   const rows = rs.map((r, i) => {
     const speech = responseSpeech(r) || '—';
     const translation = responseEnglishTranslation(r) || '—';
     const explanation = responseMappingExplanation(r) || '—';
-    const crmTag = r.crmClientId || currentCrmId;
 
     return `
     <tr>
@@ -3439,10 +3619,7 @@ function renderResponses() {
         <div style="font-weight:600;max-width:260px">${esc(r.question || '')}</div>
         <div style="margin-top:5px">
           <span class="badge badge-gray" style="font-size:10px">${esc(r.category||'')}</span>
-          <span class="badge badge-blue" style="font-size:10px;margin-left:3px">${esc(r.type||'')}</span>
-          ${crmTag ? `<span class="badge badge-green" style="font-size:10px;margin-left:3px">✓ ${esc(crmTag)}</span>` : ''}
         </div>
-        <div style="margin-top:6px">${getResponseBadges(r)}</div>
       </td>
 
       <td style="min-width:210px;max-width:280px">
@@ -3569,6 +3746,12 @@ function populateSettingsForm() {
   document.getElementById('s-speech-key').value         = s.speechKey          || '';
   const speechVoiceEl = document.getElementById('s-speech-voice');
   if (speechVoiceEl) speechVoiceEl.value = s.speechVoice || 'en-US-LunaNeural';
+  const vpEl = document.getElementById('s-voice-provider');
+  if (vpEl) vpEl.value = s.voiceProvider || 'google';
+  const gtmEl = document.getElementById('s-google-tts-model');
+  if (gtmEl) gtmEl.value = s.googleTtsModel || 'gemini-2.5-flash-tts';
+  const gtvEl = document.getElementById('s-google-tts-voice');
+  if (gtvEl) gtvEl.value = s.googleTtsVoice || 'Kore';
 
   document.getElementById('s-avatar-resource').value  = s.avatarResourceName || 'ai-caseworker-avatar';
   document.getElementById('s-avatar-endpoint').value  = s.avatarEndpoint || 'https://francecentral.api.cognitive.microsoft.com/';
@@ -3577,6 +3760,12 @@ function populateSettingsForm() {
   document.getElementById('s-avatar-character').value = s.avatarCharacter || 'lisa';
   document.getElementById('s-avatar-style').value     = s.avatarStyle || 'casual-sitting';
   document.getElementById('s-avatar-voice').value     = s.avatarVoice || 'en-US-LunaNeural';
+  const setIf = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  setIf('s-avatar-provider', s.avatarProvider || 'azure');
+  setIf('s-gemini-avatar-name', s.geminiAvatarName || 'Kira');
+  setIf('s-gemini-avatar-voice', s.geminiAvatarVoice || 'zephyr');
+  setIf('s-gemini-live-model', s.geminiLiveModel || 'gemini-3.8-live');
+  setIf('s-gemini-live-location', s.geminiLiveLocation || 'us-central1');
 }
 
 async function saveSettings() {
@@ -3590,13 +3779,21 @@ async function saveSettings() {
     speechRegion:       document.getElementById('s-speech-region').value.trim(),
     speechKey:          document.getElementById('s-speech-key').value.trim(),
     speechVoice:        (document.getElementById('s-speech-voice')?.value || 'en-US-LunaNeural').trim(),
+    voiceProvider:      document.getElementById('s-voice-provider')?.value || 'google',
+    googleTtsModel:     (document.getElementById('s-google-tts-model')?.value || 'gemini-2.5-flash-tts').trim(),
+    googleTtsVoice:     (document.getElementById('s-google-tts-voice')?.value || 'Kore').trim(),
     avatarResourceName: document.getElementById('s-avatar-resource').value.trim(),
     avatarEndpoint:     document.getElementById('s-avatar-endpoint').value.trim(),
     avatarRegion:       document.getElementById('s-avatar-region').value.trim(),
     avatarKey:          document.getElementById('s-avatar-key').value.trim(),
     avatarCharacter:    (document.getElementById('s-avatar-character').value || 'lisa').trim(),
     avatarStyle:        (document.getElementById('s-avatar-style').value || 'casual-sitting').trim(),
-    avatarVoice:        (document.getElementById('s-avatar-voice').value || 'en-US-LunaNeural').trim()
+    avatarVoice:        (document.getElementById('s-avatar-voice').value || 'en-US-LunaNeural').trim(),
+    avatarProvider:     document.getElementById('s-avatar-provider')?.value || 'azure',
+    geminiAvatarName:   (document.getElementById('s-gemini-avatar-name')?.value || 'Kira').trim(),
+    geminiAvatarVoice:  (document.getElementById('s-gemini-avatar-voice')?.value || 'zephyr').trim(),
+    geminiLiveModel:    (document.getElementById('s-gemini-live-model')?.value || 'gemini-3.8-live').trim(),
+    geminiLiveLocation: (document.getElementById('s-gemini-live-location')?.value || 'us-central1').trim()
   };
 
   // Keep current-session behavior unchanged.
@@ -3998,6 +4195,257 @@ async function testAvatarConnection() {
   }
 }
 
+// ─── Google Gemini-TTS (Cloud Text-to-Speech) ─────────────────
+// Used for the interview voice when Settings > Voice service = Google. Requests go
+// through server.py (POST /google-tts) with the same service-account key file.
+const GOOGLE_TTS_STYLE = 'Speak warmly, clearly and calmly, at a relaxed pace, like a kind and patient social-services caseworker.';
+// App language codes -> Gemini-TTS language codes where they differ.
+const GOOGLE_TTS_LANG = { 'ar-SA': 'ar-001', 'zh-CN': 'cmn-CN' };
+
+function useGoogleVoice(s) {
+  s = s || loadSettings();
+  return s.voiceProvider !== 'azure' && !!s.gcpProjectId;
+}
+
+// Gemini-TTS returns the audio only after the whole clip is generated, which
+// takes 3–17 s. Clips are cached (same text = instant replay) and can be
+// requested ahead of time with prefetchGoogleTTS() while the question is shown.
+const _googleTtsCache = new Map();   // key -> Promise<base64 mp3>
+const GOOGLE_TTS_CACHE_MAX = 60;
+
+function fetchGoogleTtsAudio(text, lang) {
+  const s = loadSettings();
+  if (!s.gcpProjectId) return Promise.reject(new Error('Google Project ID is not set in Settings.'));
+  const clean = String(text || '').trim();
+  const languageCode = GOOGLE_TTS_LANG[lang] || lang || 'en-US';
+  const model = s.googleTtsModel || 'gemini-2.5-flash-tts';
+  const voiceName = s.googleTtsVoice || 'Kore';
+  const key = [model, voiceName, languageCode, clean].join('|');
+
+  if (_googleTtsCache.has(key)) return _googleTtsCache.get(key);
+
+  const request = fetch('/google-tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      projectId:       s.gcpProjectId,
+      credentialsFile: s.gcpCredentialsFile || '',
+      model,
+      voiceName,
+      languageCode,
+      prompt:          GOOGLE_TTS_STYLE,
+      text:            clean
+    })
+  }).then(async res => {
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.audioContent) {
+      throw new Error(`Google voice ${res.status}: ${data.error?.message || data.error || 'no audio returned'}`);
+    }
+    return data.audioContent;
+  });
+
+  _googleTtsCache.set(key, request);
+  request.catch(() => _googleTtsCache.delete(key));   // never cache failures
+  if (_googleTtsCache.size > GOOGLE_TTS_CACHE_MAX) {
+    _googleTtsCache.delete(_googleTtsCache.keys().next().value);
+  }
+  return request;
+}
+
+// ── Streaming Gemini voice (server.py POST /google-tts-stream) ──
+// Audio arrives as raw 16-bit PCM (24 kHz mono) and is played chunk by chunk,
+// so speech starts after ~0.7 s instead of after the whole clip is generated.
+// A clip is cached while and after it streams: a prefetch that is still running
+// is simply joined by Play, and replays are instant.
+const GOOGLE_TTS_STREAM_RATE = 24000;
+const _googleTtsStreams = new Map();   // key -> clip
+const GOOGLE_TTS_STREAM_CACHE_MAX = 40;
+let _googleTtsAudioCtx = null;
+
+function googleTtsStreamClip(text, lang) {
+  const s = loadSettings();
+  const clean = String(text || '').trim();
+  const languageCode = GOOGLE_TTS_LANG[lang] || lang || 'en-US';
+  const model = s.googleTtsModel || 'gemini-2.5-flash-tts';
+  const voiceName = s.googleTtsVoice || 'Kore';
+  const key = [model, voiceName, languageCode, clean].join('|');
+  if (_googleTtsStreams.has(key)) return _googleTtsStreams.get(key);
+
+  const clip = { chunks: [], done: false, error: null, listeners: new Set() };
+  const notify = () => clip.listeners.forEach(fn => fn());
+  _googleTtsStreams.set(key, clip);
+  if (_googleTtsStreams.size > GOOGLE_TTS_STREAM_CACHE_MAX) {
+    _googleTtsStreams.delete(_googleTtsStreams.keys().next().value);
+  }
+
+  (async () => {
+    try {
+      if (!s.gcpProjectId) throw new Error('Google Project ID is not set in Settings.');
+      const res = await fetch('/google-tts-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId:       s.gcpProjectId,
+          credentialsFile: s.gcpCredentialsFile || '',
+          model, voiceName, languageCode,
+          prompt:          GOOGLE_TTS_STYLE,
+          text:            clean
+        })
+      });
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(`Google voice stream ${res.status}: ${data.error?.message || 'no audio'}`);
+      }
+      const reader = res.body.getReader();
+      let carry = null;   // odd trailing byte between network chunks
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        let bytes = value;
+        if (carry) { bytes = new Uint8Array(carry.length + value.length); bytes.set(carry); bytes.set(value, carry.length); carry = null; }
+        if (bytes.length % 2) { carry = bytes.slice(-1); bytes = bytes.slice(0, -1); }
+        if (bytes.byteOffset % 2) bytes = bytes.slice();   // Int16Array needs 2-byte alignment
+        if (bytes.length) { clip.chunks.push(bytes); notify(); }
+      }
+      if (!clip.chunks.length) throw new Error('Google voice stream returned no audio');
+    } catch (e) {
+      clip.error = e;
+      if (!clip.chunks.length) _googleTtsStreams.delete(key);   // never cache failures
+    } finally {
+      clip.done = true;
+      notify();
+    }
+  })();
+
+  return clip;
+}
+
+// Plays a (possibly still streaming) clip. Resolves when playback ends or is
+// stopped; rejects only if the stream failed before any audio arrived.
+function playGoogleTtsClip(clip) {
+  if (!_googleTtsAudioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    _googleTtsAudioCtx = new Ctx({ sampleRate: GOOGLE_TTS_STREAM_RATE });
+  }
+  const ctx = _googleTtsAudioCtx;
+  if (ctx.state === 'suspended') ctx.resume();
+
+  return new Promise((resolve, reject) => {
+    const sources = new Set();
+    let next = 0;            // index of the next chunk to schedule
+    let playAt = 0;          // AudioContext time for the next chunk
+    let stopped = false;
+    let started = false;
+
+    const finish = (err) => {
+      if (stopped) return;
+      stopped = true;
+      clip.listeners.delete(pump);
+      sources.forEach(src => { try { src.stop(); } catch (_) {} });
+      setAvatarSpeaking(false);
+      if (_currentAudio === player) _currentAudio = null;
+      err ? reject(err) : resolve();
+    };
+
+    // stopCurrentAudio() calls pause() on whatever is playing.
+    const player = { pause: () => finish(), currentTime: 0 };
+    _currentAudio = player;
+
+    const maybeEnd = () => {
+      if (clip.done && next >= clip.chunks.length && sources.size === 0) {
+        if (!started && clip.error) finish(clip.error);
+        else finish();
+      }
+    };
+
+    function pump() {
+      if (stopped) return;
+      while (next < clip.chunks.length) {
+        const bytes = clip.chunks[next++];
+        const pcm = new Int16Array(bytes.buffer, bytes.byteOffset, bytes.length / 2);
+        const buf = ctx.createBuffer(1, pcm.length, GOOGLE_TTS_STREAM_RATE);
+        const out = buf.getChannelData(0);
+        for (let i = 0; i < pcm.length; i++) out[i] = pcm[i] / 32768;
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        // Small lead on the first chunk (and after any network stall) absorbs jitter.
+        playAt = Math.max(playAt, ctx.currentTime + 0.12);
+        src.start(playAt);
+        playAt += buf.duration;
+        sources.add(src);
+        src.onended = () => { sources.delete(src); maybeEnd(); };
+        if (!started) { started = true; setAvatarSpeaking(true, 'Speaking…'); }
+      }
+      maybeEnd();
+    }
+
+    clip.listeners.add(pump);
+    pump();
+  });
+}
+
+// Starts generating a clip in the background so a later Play is instant.
+function prefetchGoogleTTS(text, lang) {
+  if (!String(text || '').trim() || !useGoogleVoice()) return;
+  googleTtsStreamClip(text, lang);
+}
+
+async function speakWithGoogleTTS(text, lang) {
+  const clean = String(text || '').trim();
+  if (!clean) return;
+
+  // Streaming first; the older whole-clip endpoint is the fallback.
+  try {
+    return await playGoogleTtsClip(googleTtsStreamClip(clean, lang));
+  } catch (e) {
+    console.warn('Google voice stream failed, using whole-clip request:', e.message);
+  }
+
+  const audioContent = await fetchGoogleTtsAudio(clean, lang);
+
+  const audio = new Audio('data:audio/mp3;base64,' + audioContent);
+  _currentAudio = audio;
+  return new Promise(resolve => {
+    let finished = false;
+    const done = () => {
+      if (finished) return;
+      finished = true;
+      setAvatarSpeaking(false);
+      if (_currentAudio === audio) _currentAudio = null;
+      resolve();
+    };
+    audio.onplay  = () => setAvatarSpeaking(true, 'Speaking…');
+    audio.onended = done;
+    audio.onerror = done;
+    audio.onpause = done;   // stopCurrentAudio() pauses it
+    audio.play().catch(done);
+  });
+}
+
+async function testGoogleVoice() {
+  const el = document.getElementById('google-tts-test-result');
+  if (el) el.innerHTML = '<div class="alert alert-info">⏳ Testing Gemini voice…</div>';
+  try {
+    useVoiceFieldsOnScreen();
+    await speakWithGoogleTTS('Hello, I am your AI caseworker. How can I help you today?', 'en-US');
+    const s = loadSettings();
+    if (el) el.innerHTML = `<div class="alert alert-success">✅ Gemini voice works: ${esc(s.googleTtsVoice || 'Kore')} (${esc(s.googleTtsModel || 'gemini-2.5-flash-tts')})</div>`;
+  } catch (e) {
+    if (el) el.innerHTML = `<div class="alert alert-error">❌ ${esc(e.message || String(e))}</div>`;
+  }
+}
+
+// Lets "Test Gemini Voice" use the values on screen before Save Settings.
+function useVoiceFieldsOnScreen() {
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const patch = {};
+  if (v('s-gcp-project'))       patch.gcpProjectId   = v('s-gcp-project');
+  if (v('s-google-tts-model'))  patch.googleTtsModel = v('s-google-tts-model');
+  if (v('s-google-tts-voice'))  patch.googleTtsVoice = v('s-google-tts-voice');
+  window.AIC_CONFIG = Object.assign({}, window.AIC_CONFIG || {}, patch);
+}
+
 // ─── speakTextInLanguage: speaks with a native voice for non-English text ───
 // English keeps using speakText() exactly as before.
 async function speakWithAzureSpeechVoice(text, lang, voiceName) {
@@ -4028,6 +4476,10 @@ async function speakTextInLanguage(text, lang, voiceName) {
   if (!lang || lang === 'en-US') return speakText(text);
   stopCurrentAudio();
   const s = loadSettings();
+  if (useGoogleVoice(s)) {
+    try { return await speakWithGoogleTTS(text, lang); }
+    catch (e) { console.warn('Google voice (' + lang + ') failed:', e.message); }
+  }
   if (s.speechKey && s.speechRegion) {
     try { return await speakWithAzureSpeechVoice(text, lang, voiceName); }
     catch (e) { console.warn('Azure Speech (' + lang + ') failed:', e.message); }
@@ -4045,7 +4497,7 @@ async function speakTextInLanguage(text, lang, voiceName) {
   });
 }
 
-// ─── speakText (priority: Avatar → Azure Speech Neural → Browser) ───
+// ─── speakText (priority: Avatar → Google Gemini voice → Azure Speech Neural → Browser) ───
 async function speakText(text) {
   const s = loadSettings();
   stopCurrentAudio();
@@ -4053,6 +4505,11 @@ async function speakText(text) {
   if (_avatarReady) {
     try { return await speakWithAvatar(text); }
     catch(e) { console.warn('Avatar speak failed:', e.message); }
+  }
+
+  if (useGoogleVoice(s)) {
+    try { return await speakWithGoogleTTS(text, 'en-US'); }
+    catch(e) { console.warn('Google voice failed:', e.message); }
   }
 
   if (s.speechKey && s.speechRegion) {
@@ -6725,13 +7182,18 @@ const _aa = {
   loopToken: 0
 };
 
+function aaAvatarDisplayName() {
+  const s = loadSettings();
+  return s.avatarProvider === 'gemini' ? (s.geminiAvatarName || 'Kira') : 'Lisa';
+}
+
 function aaSetStatus(state, detail = '') {
   const status = document.getElementById('aa-status');
   const dot = document.getElementById('aa-status-dot');
 
   const states = {
     starting:  { label: 'Starting…', color: '#f59e0b' },
-    speaking:  { label: 'Lisa is speaking', color: '#2563eb' },
+    speaking:  { label: `${aaAvatarDisplayName()} is speaking`, color: '#2563eb' },
     listening: { label: 'Listening…', color: '#dc2626' },
     analyzing: { label: 'Analyzing…', color: '#8b5cf6' },
     complete:  { label: 'Complete', color: '#16a34a' },
