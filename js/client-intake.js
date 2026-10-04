@@ -555,6 +555,8 @@ function saveConfirmedConversationWorkflowAndAdvance(q, ctx) {
   // For workflow questions, the editable Final Answer starts with the strict
   // structured value. For names this is only "FirstName LastName".
   const finalValue = corrected || strictFinalValue;
+  const allSpeech = (ctx.rawTranscripts || []).map(t => t?.text || '').filter(Boolean).join(' ').trim();
+  const isEnglish = !/[^\x00-\x7F]/.test(allSpeech);
 
   const response = {
     questionId: q.id,
@@ -563,6 +565,7 @@ function saveConfirmedConversationWorkflowAndAdvance(q, ctx) {
     type: q.type || 'open',
     fieldKey: ctx.fieldKey,
     structuredValue: ctx.structuredValue,
+    detectedClientSpeech: allSpeech,
     originalClientAnswer: ctx.rawTranscripts[0]?.text || '',
     aiInterpretedAnswer: strictFinalValue,
     caseworkerCorrectedAnswer: finalValue,
@@ -577,7 +580,9 @@ function saveConfirmedConversationWorkflowAndAdvance(q, ctx) {
     normalizedValue: ctx.structuredValue,
     missingInformation: '',
     suggestedFollowUp: '',
-    englishTranslation: ctx.lastAiResult?.englishTranslation || '',
+    // The last AI step is the yes/no confirmation (no translation): English is
+    // kept as is, anything else is translated right after saving.
+    englishTranslation: isEnglish ? allSpeech : '',
     interviewLanguage: clientIntakeLanguage(),
     confirmedAt: new Date().toISOString(),
     answeredAt: new Date().toISOString()
@@ -590,6 +595,7 @@ function saveConfirmedConversationWorkflowAndAdvance(q, ctx) {
   else responses.push(response);
 
   persistResponses(responses);
+  if (!isEnglish) updateSavedResponseTranslation(q.id, allSpeech);
 
   conv.index++;
   conv.analysis = null;

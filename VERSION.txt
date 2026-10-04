@@ -1,0 +1,3 @@
+AI Caseworker Version 7
+Turn-router architecture with isolated language control and deterministic barge-in answer routing.
+Port: 5512

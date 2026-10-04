@@ -1,0 +1,11 @@
+VERSION 37 - Google Gemini voice for the interview
+
+- Interview questions, follow-ups and notices are spoken with Google Gemini-TTS
+  (Cloud Text-to-Speech, default model gemini-2.5-flash-tts, voice Kore) in English
+  and every interview language (fa-IR, fr-CA, ar-SA -> ar-001, zh-CN -> cmn-CN, ...).
+- New Settings card "Interview Voice — Google Gemini": voice service (Google/Azure),
+  Gemini voice, voice model, and a "Test Gemini Voice" button.
+- server.py: new POST /google-tts using the same service-account key file.
+- Order: Lisa avatar (Virtual Caseworker) -> Google Gemini voice -> Azure Speech -> browser.
+- Speech recognition (listening) is still Azure Speech; the Lisa avatar is unchanged.
+- Requires the Cloud Text-to-Speech API to be enabled in the Google Cloud project.

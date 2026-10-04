@@ -2878,6 +2878,56 @@ function responseSpeech(r) {
   return String(r.originalClientAnswer || r.originalAnswer || '').trim();
 }
 
+// ── English translation of a saved answer ──────────────────────────────────
+// Structured (workflow) answers end with a yes/no confirmation step, whose AI
+// result has no translation, so their saved "English Translation" used to be
+// the last reply only ("درست هستش"). After saving, all of the client's words
+// for the question are translated and the saved record is updated.
+const SYSTEM_TRANSLATE_CLIENT_SPEECH = `You translate a client's spoken answers from an immigration intake interview into English.
+Translate faithfully and completely. Keep names, street names, numbers, dates and postal codes exactly as given.
+Do not add, explain, summarize or correct anything. If the text is already English, return it unchanged.
+Return JSON: {"englishTranslation": string}`;
+
+async function translateClientSpeechToEnglish(text) {
+  const clean = String(text || '').trim();
+  if (!clean) return '';
+  if (!/[^\x00-\x7F]/.test(clean)) return clean;   // plain ASCII: already English
+  const out = await callGPT(SYSTEM_TRANSLATE_CLIENT_SPEECH, `Client's words:\n${clean}`, true);
+  return String(out?.englishTranslation || '').trim();
+}
+
+// Translates in the background and patches the saved response, so saving and
+// moving to the next question are not delayed.
+function updateSavedResponseTranslation(questionId, speech) {
+  const clean = String(speech || '').trim();
+  if (!questionId || !clean) return;
+  translateClientSpeechToEnglish(clean).then(translation => {
+    if (!translation) return;
+    const rs = loadResponses();
+    const r = rs.find(x => x.questionId === questionId);
+    if (!r || String(r.detectedClientSpeech || '').trim() !== clean) return;   // answer changed meanwhile
+    r.englishTranslation = translation;
+    r.englishInterpretation = translation;
+    persistResponses(rs);
+    if (document.getElementById('responses-content') && typeof renderResponses === 'function') renderResponses();
+  }).catch(e => console.warn('[Translation] Could not translate the saved answer:', e.message || e));
+}
+
+// Repairs answers saved before the fix above: an "English Translation" that
+// still contains Persian/Arabic script is translated again (once per page load).
+const _translationRepairRequested = new Set();
+function repairSavedTranslations(responses) {
+  (responses || []).forEach(r => {
+    const speech = String(r.detectedClientSpeech || '').trim();
+    const current = String(r.englishTranslation || '');
+    if (!r.questionId || !speech || _translationRepairRequested.has(r.questionId)) return;
+    if (!/[؀-ۿ]/.test(current) && current) return;      // already English
+    if (!/[^\x00-\x7F]/.test(speech)) return;                       // nothing to translate
+    _translationRepairRequested.add(r.questionId);
+    updateSavedResponseTranslation(r.questionId, speech);
+  });
+}
+
 function responseEnglishTranslation(r) {
   return String(
     r.englishTranslation ||
@@ -3587,6 +3637,7 @@ function closeCrmSuccessModal() {
 function renderResponses() {
   const timeOf = r => Date.parse(r.answeredAt || r.timestamp || '') || 0;
   const rs = loadResponses().sort((a, b) => timeOf(a) - timeOf(b));
+  repairSavedTranslations(rs);
   const el = document.getElementById('responses-content');
 
   // Render top caseworker CRM panel

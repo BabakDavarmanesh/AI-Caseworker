@@ -105,10 +105,10 @@ function aaSaveWorkflowResponse(question, ctx) {
     structuredValue: ctx.structuredValue,
 
     detectedClientSpeech: detectedSpeech,
-    englishTranslation:
-      ctx.lastAiResult?.englishTranslation ||
-      ctx.lastAiResult?.interpretedAnswer ||
-      detectedSpeech,
+    // The last AI step is the yes/no confirmation, which has no translation.
+    // English speech is kept as is; anything else is translated right after
+    // saving (updateSavedResponseTranslation below).
+    englishTranslation: /[^\x00-\x7F]/.test(detectedSpeech) ? '' : detectedSpeech,
     mappingExplanation:
       ctx.lastAiResult?.mappingExplanation ||
       `The confirmed client response was mapped to the structured ${ctx.fieldKey || 'field'} value.`,
@@ -117,7 +117,7 @@ function aaSaveWorkflowResponse(question, ctx) {
     // Legacy compatibility fields.
     originalClientAnswer: ctx.rawTranscripts?.[0]?.text || detectedSpeech,
     aiInterpretedAnswer: strict || ctx.lastAiResult?.interpretedAnswer || '',
-    englishInterpretation: ctx.lastAiResult?.englishTranslation || ctx.lastAiResult?.interpretedAnswer || '',
+    englishInterpretation: /[^\x00-\x7F]/.test(detectedSpeech) ? '' : detectedSpeech,
     caseworkerCorrectedAnswer: strict || ctx.lastAiResult?.interpretedAnswer || '',
 
     isAnswerComplete: ctx.state === WF_STATE.CONFIRMED,
@@ -135,6 +135,7 @@ function aaSaveWorkflowResponse(question, ctx) {
     language: _aa.language,
     answeredAt: new Date().toISOString()
   });
+  updateSavedResponseTranslation(question.id, detectedSpeech);
 }
 
 function aaSaveGenericResponse(question, analysis, transcripts, review = false) {

@@ -1,0 +1,11 @@
+VERSION 25 - Question Bank look
+
+- Header styled like Question Engine: "Question Bank" title (emoji removed) and a larger
+  subtitle line; Clear All aligned to the subtitle.
+- Edit / delete icons on each question are larger (bigger buttons); Clear All icon larger.
+- Hovering a question card shows the same rotating neon-blue ring as the Question Engine
+  card, rotating 10% slower (2.6 s -> 2.89 s per turn). It fades in/out smoothly; the
+  animation is paused when not hovered.
+- Scoped to the Question Bank list, so the preview list on Question Engine is unchanged.
+- Files: question-bank.html (header text + Clear All icon span), css/app.css (appended).
+  No JavaScript changed.

@@ -1,0 +1,21 @@
+VERSION 27 - Edit translations
+
+- In the translation viewer (eye button on a language card) every question now has an
+  "Edit" button. It opens an inline text box in the right direction (RTL for Persian/Arabic).
+- Save / Cancel buttons; Ctrl+Enter saves, Esc cancels. Empty text is not accepted.
+- A saved edit:
+    translated        = your corrected text
+    edited / editedAt = marked as manually edited ("Edited" badge in the viewer)
+    machineTranslated = the original AI translation is kept for audit (first edit only)
+    error             = removed (a manually fixed failed question counts as done)
+  The language card and summary update immediately (e.g. "1 failed" -> "Complete").
+- Edits are used everywhere translations are read (viewer, JSON export).
+- While a translation is running, saving an edit is blocked with a message, because the
+  running translation would otherwise overwrite it.
+- Re-translating a language replaces manual edits with new AI translations (as before).
+
+Also fixed
+- The global Escape-key handler for the Question Bank edit dialog threw an error on every
+  other page; closeEditModal() now checks that the dialog exists.
+
+Files: js/app.js (viewer row + editTxItem/saveTxItem/cancelTxItem), css/app.css (appended).

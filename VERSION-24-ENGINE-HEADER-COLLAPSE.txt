@@ -1,0 +1,12 @@
+VERSION 24 - Question Engine header + animated upload area
+
+- Header text: "Question Engine" / "Transform intake forms into structured questions." /
+  "Upload a document and generate a ready-to-use question bank in seconds."
+  The emoji next to the title was removed.
+- After questions are generated and saved, the upload box and the selected-file row
+  fade and fold upward (~0.8 s) instead of disappearing at once.
+- The "Clear" button becomes "Upload another document"; clicking it unfolds the upload
+  area again and resets the pipeline (same as the old Clear).
+- On error the upload area stays visible. Respects prefers-reduced-motion.
+- Files: question-engine.html, css/app.css (appended block), js/app.js
+  (new setUploadAreaCollapsed(); one call after success, one in clearFile()).

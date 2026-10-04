@@ -1,0 +1,11 @@
+VERSION 23 - ver8 background, fonts and pipeline icon shapes
+
+- Background and text colors from ver8 (warm off-white background, warm borders).
+- Fonts from ver8: DM Sans for text, Sora for page titles and card titles.
+- Question Engine pipeline: the 4 icons now use the ver8 glyphs (file+upload arrow,
+  scan frame, brain, database) and the ver8 rounded-square box at rest.
+- Kept from ver20: all pipeline effects (float/pulse on the active step, scan beam,
+  AI orbit + pulse, save flash, green done state + check badge, flowing connectors,
+  card glow, live status line). These use higher-specificity rules, so they still apply.
+- Visual only: one CSS block appended to css/app.css and the 4 <svg> icons replaced in
+  question-engine.html. No JavaScript changed. Primary (button) color unchanged.

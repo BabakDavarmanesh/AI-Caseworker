@@ -1,0 +1,9 @@
+Version 10 - Client Intake automatic follow-up loop
+
+- Incomplete normal answers now trigger an actual spoken follow-up.
+- The system automatically listens after the follow-up and re-analyzes the response.
+- Up to 3 follow-up questions are allowed per intake question.
+- Earlier answers and follow-up answers are accumulated for analysis so partial details can be combined.
+- If the answer becomes complete, it is saved and the intake advances automatically.
+- If still incomplete after 3 follow-ups, the response is flagged for human review, saved, and the intake advances automatically.
+- Manual Stop during an automatic follow-up finalizes STT without causing duplicate analysis.

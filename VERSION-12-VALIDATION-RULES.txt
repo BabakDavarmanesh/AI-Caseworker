@@ -1,0 +1,9 @@
+Version 12 - Generic validation metadata
+
+- Question extraction now adds machine-readable validation metadata without creating new questions.
+- Added address as a supported question type.
+- Date questions can require day/month/year; the LLM may not weaken this to month/year.
+- Number questions can enforce minimum/maximum (e.g. children >= 0).
+- Choice values are only captured when explicitly present in the source document.
+- Address questions can define required components and follow-ups target only missing components.
+- Client Intake, Virtual Caseworker, and Avatar flows now pass validation metadata into answer analysis.

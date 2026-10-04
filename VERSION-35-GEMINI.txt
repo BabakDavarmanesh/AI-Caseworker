@@ -1,0 +1,14 @@
+VERSION 35 - Google Gemini replaces Azure OpenAI (GPT-5)
+
+- All AI calls now go to Google Gemini (generateContent). callGPT() keeps the same
+  name and inputs, so question extraction, answer analysis, intent detection,
+  follow-ups, translation and the Virtual Caseworker work unchanged.
+- Default model: gemini-3.8-flash. Can be changed in Settings (gemini-3.5-flash-lite,
+  gemini-3.1-pro-preview, or any Gemini model ID).
+- JSON responses use responseMimeType application/json; "thinking" parts are ignored;
+  automatic retry on 429/503.
+- Settings: "Google Gemini" card (API key + model) replaces the Azure OpenAI and
+  Azure OpenAI TTS cards. Test Connection now tests Gemini.
+- Azure OpenAI endpoint/key and TTS deployment removed from code, config.js and server.py.
+- config.js pre-filled with the Google Document AI project and processor IDs.
+- Azure Speech (voice, speech recognition) and the Lisa avatar are unchanged.

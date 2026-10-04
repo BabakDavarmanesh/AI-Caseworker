@@ -1,0 +1,7 @@
+Version 15
+
+Changes:
+- Added strict follow-up clarification guardrails: clarify only the original question meaning; never introduce related alternative dates/documents/events/statuses as acceptable answers.
+- Added optional clarificationDefinition metadata to extracted questions.
+- Client Intake passes clarificationDefinition to answer analysis.
+- Play Question is now single-flight: while TTS is playing, the button is disabled and repeated clicks are ignored.

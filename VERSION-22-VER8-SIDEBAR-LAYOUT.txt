@@ -1,0 +1,10 @@
+VERSION 22 - ver8 sidebar look + centered content
+
+- Left menu uses the ver8 design: dark navy sidebar, line (SVG) icons instead of emoji,
+  DM Sans / Sora fonts, "Secure demo environment" footer. Sidebar width 260px.
+- Menu labels and links from ver20 are kept (Client Intake, Virtual Caseworker).
+- Page content is a centered 900px column, like ver8.
+- Visual only: CSS block appended at the end of css/app.css (safe to remove) and the
+  <aside class="sidebar"> markup replaced in the 7 pages. No JavaScript changed.
+- Not applied: ver8's wider "refreshed look" (beige background, large page titles,
+  restyled pipeline / upload box / cards), so the ver20 pipeline status line is unchanged.

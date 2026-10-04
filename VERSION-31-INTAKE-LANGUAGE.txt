@@ -1,0 +1,22 @@
+VERSION 31 - Client Intake: interview language
+
+- New "Interview language" bar at the top of Client Intake: English plus every language
+  that has translations in the Translation Engine (partial ones show e.g. 2/4).
+  The choice is remembered.
+- With a language selected:
+    * the question is shown in that language (RTL for Persian/Arabic) with the English
+      text underneath ("EN ...");
+    * main questions use the Translation Engine text (including manual edits); AI
+      follow-ups and workflow prompts are translated on the fly;
+    * Play Question speaks in that language with a native Azure neural voice;
+    * Speak recognizes speech in that language;
+    * guardrail notices are spoken in that language.
+- Answers stay in English where it matters: the analysis returns the English translation
+  and an English mapped value (rule added to both analysis prompts); responses store
+  englishTranslation / mappedAnswer in English, keep the client's original words in
+  detectedClientSpeech, and record interviewLanguage.
+- English works exactly as before.
+
+Files: js/client-intake.js (language module, prompt/playback/analysis hooks),
+js/app.js (speech recognition language for Client Intake listeners, speakTextInLanguage,
+renderConv language bar, English-value rule in analysis prompts), css/app.css (appended).
