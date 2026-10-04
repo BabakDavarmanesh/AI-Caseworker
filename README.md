@@ -1,6 +1,6 @@
 # CaseBridge AI
 
-AI-assisted client intake for caseworkers. An intake form is turned into a question bank, the client is interviewed by voice (in their own language, by a caseworker or by a talking avatar), every answer is checked and confirmed with the client, and the approved data is mapped to Dynamics 365 fields and sent to a Mock CRM.
+AI-assisted client intake for caseworkers. An intake form is turned into a question bank, the client is interviewed by voice (in their own language, by a caseworker or by a talking avatar), every answer is checked and confirmed with the client, and the approved data is mapped to CRM fields and sent to a Mock CRM.
 
 Hackathon prototype: plain HTML/JavaScript pages plus a small Python server. **All AI runs on Google Cloud (Gemini on Vertex AI, Gemini Live, Gemini-TTS, Document AI). No Azure services are used.**
 
