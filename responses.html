@@ -129,9 +129,6 @@
         <p>Review client responses, verify automated Dynamics CRM field mappings, approve data, and sync to Mock CRM.</p>
       </div>
       <div class="row" style="gap:8px">
-        <button class="btn btn-secondary btn-sm" onclick="loadDemoIntakeResponses()" title="Load sample intake responses for all 9 fields">
-          ✨ Load Demo Intake (9 Fields)
-        </button>
         <button class="btn btn-primary btn-sm" onclick="openCaseworkerReviewModal()">
           📋 Review & Approve for CRM
         </button>
@@ -159,7 +156,7 @@
         <span style="color:var(--text-muted)">➔</span>
         <span class="badge badge-blue" style="padding:4px 8px">5. POST /api/clients</span>
         <span style="color:var(--text-muted)">➔</span>
-        <span class="badge badge-green" style="padding:4px 8px">6. Client Created (CRM-1001)</span>
+        <span class="badge badge-green" style="padding:4px 8px">6. Client Created</span>
       </div>
     </div>
 
@@ -338,7 +335,7 @@
 
     <div style="display:inline-flex;align-items:center;gap:10px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:10px 20px;margin-bottom:18px">
       <span style="font-size:12px;color:#1e40af;font-weight:600;text-transform:uppercase">Assigned Client ID:</span>
-      <span style="font-family:monospace;font-size:22px;font-weight:800;color:#1d4ed8" id="success-client-id">CRM-1001</span>
+      <span style="font-family:monospace;font-size:22px;font-weight:800;color:#1d4ed8" id="success-client-id"></span>
     </div>
 
     <div style="text-align:left;margin-bottom:18px">
@@ -360,6 +357,6 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script src="config.js"></script>
-<script src="js/app.js?v=47"></script>
+<script src="js/app.js?v=48"></script>
 </body>
 </html>

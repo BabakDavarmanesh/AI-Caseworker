@@ -1190,20 +1190,10 @@ STT alternatives: ${JSON.stringify(sttMeta?.alternatives?.slice(0,3) || [])}
 
 Use ALL responses above together. Do not discard information from earlier responses.
 
-DEMO NAME HINT:
-- One possible demo name is "Mona Esrafilzadeh".
-- Treat this only as a spelling/context hint when the transcript or spelling is reasonably close.
-- Never replace a clearly different name with Mona Esrafilzadeh.
-- When the client spells M-O-N-A and E-S-R-A-F-I-L-Z-A-D-E-H, normalize the name to:
-  firstName: "Mona"
-  lastName: "Esrafilzadeh"
-
 Based on the current state and the complete transcript history, determine the appropriate action.
 For state COLLECTING_ANSWER: extract structured components, check completeness.
 For state COLLECTING_SPELLING:
 - Carefully interpret letter-by-letter spelling, phonetic spelling such as "B as in Bravo", and natural corrections such as "my first name is Babak".
-- For the demo, recognize plausible STT variants of "Mona Esrafilzadeh", including separated letters and approximate transcriptions such as "Mona Esrafil Zadeh" or "Mona Esrafilzade".
-- Only use the demo-name hint when the spoken or spelled evidence is close; do not force it for unrelated names.
 - Compare the spelling with the current structured value and update every component the client corrected.
 - Do not ignore spelling merely because speech recognition produced words instead of isolated letters.
 - If spelling is unclear, use action retry and ask for spelling again.
@@ -1235,7 +1225,7 @@ ADDRESS-SPECIFIC RULES:
   - St -> streetType: "Street"
   - Ave -> streetType: "Avenue"
   - Rd -> streetType: "Road"
-- A sentence such as "I'm in West Vancouver, unit 1609, 945 Marine Drive, BC, V7T 1A8"
+- A sentence such as "I'm in Burnaby, unit 12, 123 Main Street, BC, A1A 1A1"
   contains city, unit number, street number, street name, street type, province, and postal code.
 - Do not infer a missing city only from a postal code unless the city was explicitly spoken.
 - If all required address components are present across the full transcript history, set isAnswerComplete=true and action=confirm_value.
@@ -3094,11 +3084,11 @@ function renderMappedAnswerCell(r) {
 const DEMO_INTAKE_QUESTIONS = [
   { id: 'q_name', fieldKey: 'full_name', question: 'What is your full name?', category: 'Personal Information', type: 'open', expectedAnswer: 'Full legal name', required: true },
   { id: 'q_arrival', fieldKey: 'first_arrival_date', question: 'What was your first arrival date in Canada?', category: 'Immigration & Status', type: 'date', expectedAnswer: 'Date of first entry into Canada (YYYY-MM-DD)', required: true },
-  { id: 'q_street', fieldKey: 'street_name', question: 'What is your street name?', category: 'Contact Information', type: 'address', expectedAnswer: 'Street name (e.g. Robson Street)', required: true },
+  { id: 'q_street', fieldKey: 'street_name', question: 'What is your street name?', category: 'Contact Information', type: 'address', expectedAnswer: 'Street name (e.g. Main Street)', required: true },
   { id: 'q_unit', fieldKey: 'unit_number', question: 'What is your unit number?', category: 'Contact Information', type: 'open', expectedAnswer: 'Apartment or unit number if applicable', required: false },
   { id: 'q_city', fieldKey: 'city', question: 'What is your city?', category: 'Contact Information', type: 'open', expectedAnswer: 'City of residence', required: true },
   { id: 'q_province', fieldKey: 'province', question: 'What is your province?', category: 'Contact Information', type: 'open', expectedAnswer: 'Province or territory in Canada', required: true },
-  { id: 'q_postal', fieldKey: 'postal_code', question: 'What is your postal code?', category: 'Contact Information', type: 'open', expectedAnswer: 'Canadian postal code (e.g. V6B 2B6)', required: true },
+  { id: 'q_postal', fieldKey: 'postal_code', question: 'What is your postal code?', category: 'Contact Information', type: 'open', expectedAnswer: 'Canadian postal code (e.g. A1A 1A1)', required: true },
   { id: 'q_country', fieldKey: 'country', question: 'What is your country?', category: 'Contact Information', type: 'country', expectedAnswer: 'Country of residence (Canada)', required: true },
   { id: 'q_marital', fieldKey: 'marital_status', question: 'What is your marital status?', category: 'Personal Information', type: 'choice', expectedAnswer: 'Married, Single, Divorced, Common-law, Widowed', required: true },
   { id: 'q_children', fieldKey: 'number_of_children', question: 'How many children do you have?', category: 'Family Information', type: 'number', expectedAnswer: 'Number of dependent children (numeric)', required: true }
@@ -3108,157 +3098,6 @@ function loadDemoIntakeQuestions() {
   persistQuestions(DEMO_INTAKE_QUESTIONS);
   renderQuestionBank();
   toast('Demo intake questions loaded (10 questions matching CRM intake fields)', 'success');
-}
-
-const DEMO_INTAKE_RESPONSES = [
-  {
-    id: 'resp_name',
-    fieldKey: 'full_name',
-    question: 'What is your full name?',
-    category: 'Personal Information',
-    type: 'open',
-    detectedClientSpeech: 'My name is Amir Hosseini',
-    englishTranslation: 'My name is Amir Hosseini',
-    mappingExplanation: 'Extracted full legal name: Amir Hosseini',
-    mappedAnswer: 'Amir Hosseini',
-    structuredValue: { firstName: 'Amir', lastName: 'Hosseini' },
-    isAnswerComplete: true,
-    isConfirmed: true,
-    answeredAt: new Date(Date.now() - 3600000).toISOString()
-  },
-  {
-    id: 'resp_arrival',
-    fieldKey: 'first_arrival_date',
-    question: 'What was your first arrival date in Canada?',
-    category: 'Immigration & Status',
-    type: 'date',
-    detectedClientSpeech: 'I arrived on September 12, 2023 at Vancouver airport.',
-    englishTranslation: 'I arrived on September 12, 2023 at Vancouver airport.',
-    mappingExplanation: 'Normalized date to standard ISO 2023-09-12.',
-    mappedAnswer: '2023-09-12',
-    isAnswerComplete: true,
-    isConfirmed: true,
-    answeredAt: new Date(Date.now() - 3300000).toISOString()
-  },
-  {
-    id: 'resp_street',
-    fieldKey: 'street_name',
-    question: 'What is your street name?',
-    category: 'Contact Information',
-    type: 'address',
-    detectedClientSpeech: 'Robson Street',
-    englishTranslation: 'Robson Street',
-    mappingExplanation: 'Verified street name: Robson Street.',
-    mappedAnswer: 'Robson Street',
-    isAnswerComplete: true,
-    isConfirmed: true,
-    answeredAt: new Date(Date.now() - 3000000).toISOString()
-  },
-  {
-    id: 'resp_unit',
-    fieldKey: 'unit_number',
-    question: 'What is your unit number?',
-    category: 'Contact Information',
-    type: 'open',
-    detectedClientSpeech: 'Suite 402',
-    englishTranslation: 'Suite 402',
-    mappingExplanation: 'Extracted unit / suite number: Suite 402.',
-    mappedAnswer: 'Suite 402',
-    isAnswerComplete: true,
-    isConfirmed: true,
-    answeredAt: new Date(Date.now() - 2700000).toISOString()
-  },
-  {
-    id: 'resp_city',
-    fieldKey: 'city',
-    question: 'What is your city?',
-    category: 'Contact Information',
-    type: 'open',
-    detectedClientSpeech: 'Vancouver',
-    englishTranslation: 'Vancouver',
-    mappingExplanation: 'Normalized city: Vancouver.',
-    mappedAnswer: 'Vancouver',
-    isAnswerComplete: true,
-    isConfirmed: true,
-    answeredAt: new Date(Date.now() - 2400000).toISOString()
-  },
-  {
-    id: 'resp_province',
-    fieldKey: 'province',
-    question: 'What is your province?',
-    category: 'Contact Information',
-    type: 'open',
-    detectedClientSpeech: 'British Columbia',
-    englishTranslation: 'British Columbia',
-    mappingExplanation: 'Normalized province: British Columbia.',
-    mappedAnswer: 'British Columbia',
-    isAnswerComplete: true,
-    isConfirmed: true,
-    answeredAt: new Date(Date.now() - 2100000).toISOString()
-  },
-  {
-    id: 'resp_postal',
-    fieldKey: 'postal_code',
-    question: 'What is your postal code?',
-    category: 'Contact Information',
-    type: 'open',
-    detectedClientSpeech: 'V 6 B 2 B 6',
-    englishTranslation: 'V6B 2B6',
-    mappingExplanation: 'Canadian postal code standard format: V6B 2B6.',
-    mappedAnswer: 'V6B 2B6',
-    isAnswerComplete: true,
-    isConfirmed: true,
-    answeredAt: new Date(Date.now() - 1800000).toISOString()
-  },
-  {
-    id: 'resp_country',
-    fieldKey: 'country',
-    question: 'What is your country?',
-    category: 'Contact Information',
-    type: 'country',
-    detectedClientSpeech: 'Canada',
-    englishTranslation: 'Canada',
-    mappingExplanation: 'Country: Canada.',
-    mappedAnswer: 'Canada',
-    isAnswerComplete: true,
-    isConfirmed: true,
-    answeredAt: new Date(Date.now() - 1500000).toISOString()
-  },
-  {
-    id: 'resp_marital',
-    fieldKey: 'marital_status',
-    question: 'What is your marital status?',
-    category: 'Personal Information',
-    type: 'choice',
-    detectedClientSpeech: 'I am married, my spouse lives with me.',
-    englishTranslation: 'I am married, my spouse lives with me.',
-    mappingExplanation: 'Mapped to relationship status choice "Married".',
-    mappedAnswer: 'Married',
-    isAnswerComplete: true,
-    isConfirmed: true,
-    answeredAt: new Date(Date.now() - 1200000).toISOString()
-  },
-  {
-    id: 'resp_children',
-    fieldKey: 'number_of_children',
-    question: 'How many children do you have?',
-    category: 'Family Information',
-    type: 'number',
-    detectedClientSpeech: 'We have 2 young kids.',
-    englishTranslation: 'We have 2 young kids.',
-    mappingExplanation: 'Extracted numeric children count: 2.',
-    mappedAnswer: '2',
-    isAnswerComplete: true,
-    isConfirmed: true,
-    answeredAt: new Date(Date.now() - 900000).toISOString()
-  }
-];
-
-function loadDemoIntakeResponses() {
-  persistResponses(DEMO_INTAKE_RESPONSES);
-  localStorage.removeItem('aic_current_crm_client_id');
-  renderResponses();
-  toast('Demo intake responses loaded (all 9 fields + name ready for CRM review)', 'success');
 }
 
 // Extract 9 required intake fields from saved responses
@@ -3458,7 +3297,7 @@ function renderCaseworkerCrmPanel() {
 function openCaseworkerReviewModal() {
   const rs = loadResponses();
   if (!rs.length) {
-    toast('No responses yet — complete a Client Intake first (or load the demo intake).', 'info');
+    toast('No responses yet — complete a Client Intake first.', 'info');
     return;
   }
   const fields = extractIntakeFields(rs);
@@ -3576,7 +3415,7 @@ async function submitCaseworkerApproval() {
 async function submitCaseworkerApprovalQuick() {
   const rs = loadResponses();
   if (!rs.length) {
-    toast('No responses yet — complete a Client Intake first (or load the demo intake).', 'info');
+    toast('No responses yet — complete a Client Intake first.', 'info');
     return;
   }
   const fields = extractIntakeFields(rs);
@@ -3599,7 +3438,8 @@ async function sendApprovedDataToCrm(payload) {
     const data = await res.json();
 
     // Success handling
-    const clientId = data.clientId || 'CRM-1001';
+    const clientId = data.clientId;
+    if (!clientId) throw new Error('The Mock CRM did not return a client id');
     localStorage.setItem('aic_current_crm_client_id', clientId);
 
     // Save to local cached list as well
@@ -3685,10 +3525,9 @@ function renderResponses() {
     el.innerHTML = `<div class="card"><div class="empty-state">
       <div class="ei">📊</div>
       <h3>No responses yet</h3>
-      <p>Complete a conversation session or load sample intake responses to test Caseworker Review and Mock CRM sync.</p>
+      <p>Complete a Client Intake or Virtual Caseworker session to review answers and sync them to the Mock CRM.</p>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
-        <button class="btn btn-primary" onclick="loadDemoIntakeResponses()">✨ Load Demo Intake (9 Fields)</button>
-        <a class="btn btn-secondary" href="interview.html">Start Client Intake</a>
+        <a class="btn btn-primary" href="interview.html">Start Client Intake</a>
       </div>
     </div></div>`;
     return;
@@ -4627,14 +4466,6 @@ let _convListenFinish = null;
 let _convMicWarmedUp = false;
 let _convFirstSuccessfulCaptureDone = false;
 
-// Demo-only name hints. These improve STT accuracy but must never override
-// what the client actually says or spells.
-const DEMO_NAME_HINTS = [
-  'Mona',
-  'Esrafilzadeh',
-  'Mona Esrafilzadeh'
-];
-
 async function warmUpConversationMicrophone() {
   if (_convMicWarmedUp || !navigator.mediaDevices?.getUserMedia) return;
 
@@ -5045,34 +4876,6 @@ async function listenForAnswer(previousText = '') {
         new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
 
       // Bias Azure Speech toward the known demo name without forcing it.
-      // Never attach the name phrase list during confirmation.
-      try {
-        if (
-          !isConversationConfirmationTurn() &&
-          SpeechSDK.PhraseListGrammar?.fromRecognizer
-        ) {
-          const phraseList =
-            SpeechSDK.PhraseListGrammar.fromRecognizer(_sdkRecognizer);
-
-          DEMO_NAME_HINTS.forEach(name => phraseList.addPhrase(name));
-
-          if (typeof phraseList.setWeight === 'function') {
-            phraseList.setWeight(
-              conv.workflowCtx?.state === WF_STATE.COLLECTING_SPELLING
-                ? 2.0
-                : 1.7
-            );
-          }
-
-          console.log(
-            '[Conversation STT] Demo name phrase hints applied:',
-            DEMO_NAME_HINTS
-          );
-        }
-      } catch (e) {
-        console.warn('[Conversation STT] Phrase hints unavailable:', e);
-      }
-
       _sdkRecognizer.recognizing = (_, event) => {
         if (finished) return;
 

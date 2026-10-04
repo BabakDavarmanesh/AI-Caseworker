@@ -178,7 +178,7 @@
         <span style="color:var(--text-muted)">➔</span>
         <span class="badge badge-blue" style="padding:4px 8px">5. POST /api/clients</span>
         <span style="color:var(--text-muted)">➔</span>
-        <span class="badge badge-green" style="padding:4px 8px">6. Client Created (CRM-1001)</span>
+        <span class="badge badge-green" style="padding:4px 8px">6. Client Created</span>
       </div>
     </div>
 
@@ -210,7 +210,7 @@
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;max-width:540px">
         <span class="api-badge">GET</span>
         <span style="font-family:monospace;font-size:13px">/api/clients/</span>
-        <input type="text" id="test-client-id" placeholder="e.g. CRM-1001" style="flex:1" value="CRM-1001">
+        <input type="text" id="test-client-id" placeholder="Client ID, e.g. CRM-1001" style="flex:1" value="">
         <button class="btn btn-secondary btn-sm" onclick="runGetTest()">Fetch Record</button>
       </div>
       <div id="test-get-result" style="display:none">
@@ -228,7 +228,7 @@
       <div>
         <div style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px">
           <span>Client Record Payload</span>
-          <span class="badge-crm-id" id="modal-client-id">CRM-1001</span>
+          <span class="badge-crm-id" id="modal-client-id"></span>
         </div>
         <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="modal-client-created"></div>
       </div>
@@ -270,7 +270,7 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script src="config.js"></script>
-<script src="js/app.js?v=47"></script>
+<script src="js/app.js?v=48"></script>
 <script>
 let _crmClients = [];
 
@@ -306,10 +306,10 @@ function updateStats(clients) {
   document.getElementById('crm-table-badge').textContent = `${clients.length} client${clients.length !== 1 ? 's' : ''}`;
   if (clients.length) {
     const latest = clients[clients.length - 1];
-    document.getElementById('crm-stat-latest').textContent = latest.clientId || 'CRM-1001';
+    document.getElementById('crm-stat-latest').textContent = latest.clientId || '-';
     const dateStr = latest.createdAt ? new Date(latest.createdAt).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : 'Recently';
     document.getElementById('crm-stat-time').textContent = `Created at ${dateStr}`;
-    document.getElementById('test-client-id').value = latest.clientId || 'CRM-1001';
+    document.getElementById('test-client-id').value = latest.clientId || '';
   } else {
     document.getElementById('crm-stat-latest').textContent = '—';
     document.getElementById('crm-stat-time').textContent = 'No records yet';
@@ -328,7 +328,6 @@ function renderCrmTable(clients) {
         </p>
         <div style="display:flex;gap:10px;justify-content:center">
           <a class="btn btn-primary btn-sm" href="responses.html">Go to Caseworker Review (Responses)</a>
-          <button class="btn btn-secondary btn-sm" onclick="sendDemoClient()">Load Sample Client Record</button>
         </div>
       </div>`;
     return;
@@ -471,60 +470,19 @@ async function runGetTest() {
   }
 }
 
-// Sample client injector for quick testing
-async function sendDemoClient() {
-  const demoPayload = {
-    fullname: "Amir Hosseini",
-    firstarrivaldate: "2023-09-12",
-    address1_line1: "Robson Street",
-    address1_line2: "Suite 402",
-    address1_city: "Vancouver",
-    address1_stateorprovince: "British Columbia",
-    address1_postalcode: "V6B 2B6",
-    address1_country: "Canada",
-    familystatuscode: "Married",
-    numberofchildren: 2,
-    crm_metadata: {
-      source: "AI Caseworker Intake",
-      status: "Approved",
-      reviewedBy: "Caseworker",
-      approvedAt: new Date().toISOString()
-    }
-  };
-
-  try {
-    const res = await fetch('/api/clients', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(demoPayload)
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    toast(`Client created: ${data.clientId}`, 'success');
-    fetchCrmClients();
-  } catch (e) {
-    demoPayload.clientId = `CRM-${1000 + _crmClients.length + 1}`;
-    demoPayload.createdAt = new Date().toISOString();
-    _crmClients.push(demoPayload);
-    localStorage.setItem('aic_mock_crm_clients', JSON.stringify(_crmClients));
-    renderCrmTable(_crmClients);
-    updateStats(_crmClients);
-    toast(`Client created: ${demoPayload.clientId} (cached)`, 'success');
-  }
-}
-
 function openTestModal() {
+  // Empty field template: fill in your own test values.
   const sample = {
-    fullname: "Amir Hosseini",
-    firstarrivaldate: "2023-09-12",
-    address1_line1: "Robson Street",
-    address1_line2: "Suite 402",
-    address1_city: "Vancouver",
-    address1_stateorprovince: "British Columbia",
-    address1_postalcode: "V6B 2B6",
+    fullname: "",
+    firstarrivaldate: "",
+    address1_line1: "",
+    address1_line2: "",
+    address1_city: "",
+    address1_stateorprovince: "",
+    address1_postalcode: "",
     address1_country: "Canada",
-    familystatuscode: "Married",
-    numberofchildren: 2
+    familystatuscode: "",
+    numberofchildren: 0
   };
   document.getElementById('test-post-payload').value = JSON.stringify(sample, null, 2);
   document.getElementById('crm-test-modal').style.display = 'flex';

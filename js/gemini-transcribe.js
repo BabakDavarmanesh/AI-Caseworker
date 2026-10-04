@@ -3,8 +3,8 @@
 // Mixed-language transcription for the Virtual Caseworker.
 //
 // Azure Speech recognizes one language at a time. A Persian answer that
-// contains English street names, numbers or a postal code ("خیابونمون 945 Marine
-// Drive هست") comes out as nonsense Persian words, and a Persian request
+// contains English street names, numbers or a postal code ("خیابونمون 123 Main
+// Street هست") comes out as nonsense Persian words, and a Persian request
 // ("می‌تونی فارسی حرف بزنی؟") during an English session comes out as nonsense
 // English. For those turns the audio of the same utterance is sent to Gemini,
 // which writes Persian in Persian script and English/numbers/codes in Latin.
@@ -91,7 +91,7 @@ const AA_TRANSCRIBE_PROMPT =
   'The speaker may mix Persian (Farsi), English and French in one sentence. ' +
   'Write Persian words in Persian script. Write English words, street names, city names, personal names, ' +
   'spelled letters, numbers and postal codes in Latin letters and digits exactly as spoken ' +
-  '(for example: 945 Marine Drive, V7T 1A8). Do not translate, summarize, answer or correct anything. ' +
+  '(for example: 123 Main Street, A1A 1A1). Do not translate, summarize, answer or correct anything. ' +
   'If there is no speech, return an empty transcript. ' +
   'Return JSON: {"transcript": string, "language": "fa-IR" | "en-US" | "fr-CA" | "mixed"}';
 
