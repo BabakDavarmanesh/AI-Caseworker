@@ -1,160 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ID Scan — CaseBridge AI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ID Scan — CaseBridge AI</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/app.css">
 </head>
+
 <body data-page="id-scan">
-<div class="layout">
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">
-  <svg viewBox="0 0 24 24">
-    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-    <circle cx="12" cy="12" r="3.5"/>
-  </svg>
-</div>
-    <div>
-      <div class="logo-text">CaseBridge AI</div>
-      <div class="logo-sub">Hackathon Demo</div>
-    </div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M22 8 a10 10 0 1 0 0 16" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none" />
+            <path d="M10 8 a10 10 0 1 1 0 16" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none"
+              opacity=".55" />
+          </svg>
+        </div>
+        <div>
+          <div class="logo-text">CaseBridge AI</div>
+          <div class="logo-sub">Hackathon Demo</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <div class="nav-section">ASSESSMENT</div>
+        <a class="nav-item" href="question-engine.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z" />
+            </svg></span>Question Engine</a>
+        <a class="nav-item" href="question-bank.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z" />
+              <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
+            </svg></span>Question Bank</a>
+        <a class="nav-item" href="translation.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" />
+            </svg></span>Translation Engine</a>
+        <div class="nav-section">CLIENT SESSION</div>
+        <a class="nav-item active" href="id-scan.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <circle cx="8" cy="12" r="2.5" />
+              <path d="M13 10h5M13 14h3" />
+            </svg></span>ID Scan</a>
+        <a class="nav-item" href="interview.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg></span>Client Intake</a>
+        <a class="nav-item" href="ai-assistant.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="8" width="18" height="12" rx="2" />
+              <path d="M12 8V4M8 14h.01M16 14h.01" />
+            </svg></span>Virtual Caseworker</a>
+        <div class="nav-section">CASE MANAGEMENT</div>
+        <a class="nav-item" href="responses.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="2" width="8" height="4" rx="1" />
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 12h6M9 16h6" />
+            </svg></span>Responses</a>
+        <a class="nav-item" href="crm.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg></span>Mock CRM</a>
+        <div class="nav-section">SYSTEM</div>
+        <a class="nav-item" href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+            </svg></span>Settings</a>
+      </nav>
+      <div class="sidebar-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>Secure demo environment</div>
+    </aside>
+    <main class="main">
+      <section id="sec-id-scan">
+        <div class="page-header">
+          <h1>ID Scan</h1>
+          <p class="page-lead">Read the client's identity document.</p>
+          <p class="page-sub">Upload a passport, PR card, driver's licence or other ID. The name and date of birth are
+            used in Responses and sent to the Mock CRM.</p>
+        </div>
+
+        <div class="card glow-card" id="id-card">
+          <span class="glow-halo" aria-hidden="true"></span>
+          <div class="card-title">🪪 ID Processing</div>
+
+          <div class="pipeline pipeline-animated" aria-label="ID processing pipeline">
+            <div class="pipeline-step" id="id-step-upload">
+              <div class="step-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                  <path class="icon-detail" d="M12 18v-6M9 15l3-3 3 3" />
+                </svg>
+                <span class="step-check">✓</span>
+              </div>
+              <div class="step-label">ID Upload</div>
+              <div class="step-caption">Ready</div>
+            </div>
+            <div class="pipeline-connector"><span></span></div>
+            <div class="pipeline-step" id="id-step-read">
+              <div class="step-icon ai-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path class="ai-spark"
+                    d="M12 5a3 3 0 1 0-6 .1 4 4 0 0 0-2.5 5.8 4 4 0 0 0 .5 6.6A4 4 0 1 0 12 18zM12 5a3 3 0 1 1 6 .1 4 4 0 0 1 2.5 5.8 4 4 0 0 1-.5 6.6A4 4 0 1 1 12 18z" />
+                </svg>
+                <span class="ai-orbit"></span>
+                <span class="step-check">✓</span>
+              </div>
+              <div class="step-label">Gemini Reads ID</div>
+              <div class="step-caption">Waiting</div>
+            </div>
+            <div class="pipeline-connector"><span></span></div>
+            <div class="pipeline-step" id="id-step-verify">
+              <div class="step-icon scan-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+                  <g class="scan-lines">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="m16 16-1.9-1.9" />
+                  </g>
+                </svg>
+                <span class="scan-beam"></span>
+                <span class="step-check">✓</span>
+              </div>
+              <div class="step-label">Check Details</div>
+              <div class="step-caption">Waiting</div>
+            </div>
+            <div class="pipeline-connector"><span></span></div>
+            <div class="pipeline-step" id="id-step-save">
+              <div class="step-icon bank-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 21v-1a7 7 0 0 1 14 0v1" />
+                </svg>
+                <span class="save-flash"></span>
+                <span class="step-check">✓</span>
+              </div>
+              <div class="step-label">Client Profile</div>
+              <div class="step-caption">Waiting</div>
+            </div>
+          </div>
+
+          <div class="pipeline-status" id="pipeline-status" data-phase="idle">
+            <span class="ps-dot" aria-hidden="true"></span>
+            <span class="ps-body" aria-hidden="true"><span class="ps-text"></span><span class="ps-dots"></span></span>
+            <span class="ps-sr" role="status" aria-live="polite"></span>
+          </div>
+
+          <div class="upload-collapsible" id="upload-collapsible">
+            <div class="uc-inner">
+              <div class="upload-zone" id="id-upload-zone" onclick="document.getElementById('id-input').click()"
+                ondragover="idOnDragOver(event)" ondrop="idOnDrop(event)" ondragleave="idOnDragLeave(event)">
+                <div class="upload-icon">🪪</div>
+                <p><strong>Click to select the ID document</strong> or drag and drop it here</p>
+                <p style="font-size:12px;margin-top:4px;color:var(--text-light)">Photo or scan: JPG, PNG, WEBP or PDF
+                  (front side; add the back side as a second file if needed)</p>
+                <input type="file" id="id-input"
+                  accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" multiple
+                  onchange="idOnFileSelect(this)">
+              </div>
+
+              <div id="id-file-indicator" style="display:none" class="alert alert-info mt-12">
+                <span>📎</span>
+                <span id="id-file-label"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-12">
+            <button class="btn btn-primary" id="btn-id-scan" onclick="idRunScan()" disabled>🔍 Scan ID</button>
+            <button class="btn btn-secondary" id="btn-id-clear" onclick="idClear()" style="display:none">✕
+              Clear</button>
+            <span id="id-status" style="font-size:13px;color:var(--text-muted)"></span>
+          </div>
+        </div>
+
+        <!-- Extracted details (editable) -->
+        <div id="id-result" style="display:none">
+          <div class="card">
+            <div class="row-between" style="margin-bottom:12px;align-items:flex-start">
+              <div class="card-title" style="margin-bottom:0">✅ Extracted ID Details</div>
+              <div id="id-badges" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:18px;align-items:start"
+              class="id-result-grid">
+              <div class="settings-grid" id="id-fields"></div>
+              <div id="id-preview" class="id-preview"></div>
+            </div>
+            <div id="id-warnings" style="margin-top:10px"></div>
+            <hr class="divider">
+            <div class="row">
+              <button class="btn btn-success" onclick="idSaveEdits(true)">💾 Save &amp; Continue to Client
+                Intake</button>
+              <button class="btn btn-secondary" onclick="idSaveEdits(false)">Save changes</button>
+              <span style="font-size:12px;color:var(--text-muted)">Name and date of birth are used in Responses and the
+                Mock CRM. The ID image itself is not stored.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
-  <nav class="nav">
-    <div class="nav-section">ASSESSMENT</div>
-    <a class="nav-item" href="question-engine.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></svg></span>Question Engine</a>
-    <a class="nav-item" href="question-bank.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg></span>Question Bank</a>
-    <a class="nav-item" href="translation.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></span>Translation Engine</a>
-    <div class="nav-section">CLIENT SESSION</div>
-    <a class="nav-item active" href="id-scan.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h5M13 14h3"/></svg></span>ID Scan</a>
-    <a class="nav-item" href="interview.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Client Intake</a>
-    <a class="nav-item" href="ai-assistant.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4M8 14h.01M16 14h.01"/></svg></span>Virtual Caseworker</a>
-    <div class="nav-section">CASE MANAGEMENT</div>
-    <a class="nav-item" href="responses.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 12h6M9 16h6"/></svg></span>Responses</a>
-    <a class="nav-item" href="crm.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Mock CRM</a>
-    <div class="nav-section">SYSTEM</div>
-    <a class="nav-item" href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>Settings</a>
-  </nav>
-  <div class="sidebar-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Secure demo environment</div>
-</aside>
-<main class="main">
-<section id="sec-id-scan">
-      <div class="page-header">
-        <h1>ID Scan</h1>
-        <p class="page-lead">Read the client's identity document.</p>
-        <p class="page-sub">Upload a passport, PR card, driver's licence or other ID. The name and date of birth are used in Responses and sent to the Mock CRM.</p>
-      </div>
+  <div class="toast-container" id="toast-container"></div>
 
-      <div class="card glow-card" id="id-card">
-        <span class="glow-halo" aria-hidden="true"></span>
-        <div class="card-title">🪪 ID Processing</div>
-
-        <div class="pipeline pipeline-animated" aria-label="ID processing pipeline">
-          <div class="pipeline-step" id="id-step-upload">
-            <div class="step-icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path class="icon-detail" d="M12 18v-6M9 15l3-3 3 3"/></svg>
-              <span class="step-check">✓</span>
-            </div>
-            <div class="step-label">ID Upload</div>
-            <div class="step-caption">Ready</div>
-          </div>
-          <div class="pipeline-connector"><span></span></div>
-          <div class="pipeline-step" id="id-step-read">
-            <div class="step-icon ai-icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path class="ai-spark" d="M12 5a3 3 0 1 0-6 .1 4 4 0 0 0-2.5 5.8 4 4 0 0 0 .5 6.6A4 4 0 1 0 12 18zM12 5a3 3 0 1 1 6 .1 4 4 0 0 1 2.5 5.8 4 4 0 0 1-.5 6.6A4 4 0 1 1 12 18z"/></svg>
-              <span class="ai-orbit"></span>
-              <span class="step-check">✓</span>
-            </div>
-            <div class="step-label">Gemini Reads ID</div>
-            <div class="step-caption">Waiting</div>
-          </div>
-          <div class="pipeline-connector"><span></span></div>
-          <div class="pipeline-step" id="id-step-verify">
-            <div class="step-icon scan-icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><g class="scan-lines"><circle cx="12" cy="12" r="3"/><path d="m16 16-1.9-1.9"/></g></svg>
-              <span class="scan-beam"></span>
-              <span class="step-check">✓</span>
-            </div>
-            <div class="step-label">Check Details</div>
-            <div class="step-caption">Waiting</div>
-          </div>
-          <div class="pipeline-connector"><span></span></div>
-          <div class="pipeline-step" id="id-step-save">
-            <div class="step-icon bank-icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>
-              <span class="save-flash"></span>
-              <span class="step-check">✓</span>
-            </div>
-            <div class="step-label">Client Profile</div>
-            <div class="step-caption">Waiting</div>
-          </div>
-        </div>
-
-        <div class="pipeline-status" id="pipeline-status" data-phase="idle">
-          <span class="ps-dot" aria-hidden="true"></span>
-          <span class="ps-body" aria-hidden="true"><span class="ps-text"></span><span class="ps-dots"></span></span>
-          <span class="ps-sr" role="status" aria-live="polite"></span>
-        </div>
-
-        <div class="upload-collapsible" id="upload-collapsible">
-          <div class="uc-inner">
-        <div class="upload-zone" id="id-upload-zone"
-             onclick="document.getElementById('id-input').click()"
-             ondragover="idOnDragOver(event)"
-             ondrop="idOnDrop(event)"
-             ondragleave="idOnDragLeave(event)">
-          <div class="upload-icon">🪪</div>
-          <p><strong>Click to select the ID document</strong> or drag and drop it here</p>
-          <p style="font-size:12px;margin-top:4px;color:var(--text-light)">Photo or scan: JPG, PNG, WEBP or PDF (front side; add the back side as a second file if needed)</p>
-          <input type="file" id="id-input" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
-                 multiple onchange="idOnFileSelect(this)">
-        </div>
-
-        <div id="id-file-indicator" style="display:none" class="alert alert-info mt-12">
-          <span>📎</span>
-          <span id="id-file-label"></span>
-        </div>
-          </div>
-        </div>
-
-        <div class="row mt-12">
-          <button class="btn btn-primary" id="btn-id-scan" onclick="idRunScan()" disabled>🔍 Scan ID</button>
-          <button class="btn btn-secondary" id="btn-id-clear" onclick="idClear()" style="display:none">✕ Clear</button>
-          <span id="id-status" style="font-size:13px;color:var(--text-muted)"></span>
-        </div>
-      </div>
-
-      <!-- Extracted details (editable) -->
-      <div id="id-result" style="display:none">
-        <div class="card">
-          <div class="row-between" style="margin-bottom:12px;align-items:flex-start">
-            <div class="card-title" style="margin-bottom:0">✅ Extracted ID Details</div>
-            <div id="id-badges" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-          </div>
-          <div style="display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:18px;align-items:start" class="id-result-grid">
-            <div class="settings-grid" id="id-fields"></div>
-            <div id="id-preview" class="id-preview"></div>
-          </div>
-          <div id="id-warnings" style="margin-top:10px"></div>
-          <hr class="divider">
-          <div class="row">
-            <button class="btn btn-success" onclick="idSaveEdits(true)">💾 Save &amp; Continue to Client Intake</button>
-            <button class="btn btn-secondary" onclick="idSaveEdits(false)">Save changes</button>
-            <span style="font-size:12px;color:var(--text-muted)">Name and date of birth are used in Responses and the Mock CRM. The ID image itself is not stored.</span>
-          </div>
-        </div>
-      </div>
-    </section>
-</main>
-</div>
-<div class="toast-container" id="toast-container"></div>
-
-<script src="config.js"></script>
-<script src="js/app.js?v=58"></script>
-<script src="js/id-scan.js?v=51"></script>
+  <script src="config.js"></script>
+  <script src="js/app.js?v=58"></script>
+  <script src="js/id-scan.js?v=51"></script>
 </body>
+
 </html>

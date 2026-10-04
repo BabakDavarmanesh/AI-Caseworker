@@ -1,376 +1,455 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Responses & CRM Sync — CaseBridge AI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/app.css">
-<style>
-  .crm-flow-banner {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    margin-bottom: 20px;
-  }
-  .crm-flow-steps {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    font-size: 12.5px;
-    font-weight: 500;
-  }
-  .crm-field-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 12px;
-    margin-top: 12px;
-  }
-  .crm-field-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 12px 14px;
-    font-size: 13px;
-  }
-  .crm-field-label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-  }
-  .crm-target-tag {
-    font-family: monospace;
-    font-size: 11px;
-    color: #2563eb;
-    background: #eff6ff;
-    padding: 1px 6px;
-    border-radius: 4px;
-  }
-  .crm-field-val {
-    font-weight: 600;
-    color: var(--text);
-    word-break: break-word;
-  }
-  .crm-json-box {
-    background: #0f172a;
-    color: #e2e8f0;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 12px;
-    line-height: 1.5;
-    padding: 12px 14px;
-    border-radius: 8px;
-    overflow-x: auto;
-    max-height: 280px;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .mapping-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  .mapping-table th {
-    background: #f1f5f9;
-    padding: 6px 10px;
-    text-align: left;
-    font-weight: 600;
-    color: #475569;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  .mapping-table td {
-    padding: 6px 10px;
-    border-bottom: 1px solid #f1f5f9;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responses & CRM Sync — CaseBridge AI</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/app.css">
+  <style>
+    .crm-flow-banner {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+    }
+
+    .crm-flow-steps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 12.5px;
+      font-weight: 500;
+    }
+
+    .crm-field-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .crm-field-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+    }
+
+    .crm-field-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .crm-target-tag {
+      font-family: monospace;
+      font-size: 11px;
+      color: #2563eb;
+      background: #eff6ff;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .crm-field-val {
+      font-weight: 600;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .crm-json-box {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 12px 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      max-height: 280px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .mapping-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .mapping-table th {
+      background: #f1f5f9;
+      padding: 6px 10px;
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .mapping-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+  </style>
 </head>
+
 <body data-page="responses">
-<div class="layout">
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">
-  <svg viewBox="0 0 24 24">
-    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-    <circle cx="12" cy="12" r="3.5"/>
-  </svg>
-</div>
-    <div>
-      <div class="logo-text">CaseBridge AI</div>
-      <div class="logo-sub">Hackathon Demo</div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M22 8 a10 10 0 1 0 0 16" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none" />
+            <path d="M10 8 a10 10 0 1 1 0 16" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none"
+              opacity=".55" />
+          </svg>
+        </div>
+        <div>
+          <div class="logo-text">CaseBridge AI</div>
+          <div class="logo-sub">Hackathon Demo</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <div class="nav-section">ASSESSMENT</div>
+        <a class="nav-item" href="question-engine.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z" />
+            </svg></span>Question Engine</a>
+        <a class="nav-item" href="question-bank.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z" />
+              <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
+            </svg></span>Question Bank</a>
+        <a class="nav-item" href="translation.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" />
+            </svg></span>Translation Engine</a>
+        <div class="nav-section">CLIENT SESSION</div>
+        <a class="nav-item" href="id-scan.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <circle cx="8" cy="12" r="2.5" />
+              <path d="M13 10h5M13 14h3" />
+            </svg></span>ID Scan</a>
+        <a class="nav-item" href="interview.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg></span>Client Intake</a>
+        <a class="nav-item" href="ai-assistant.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="8" width="18" height="12" rx="2" />
+              <path d="M12 8V4M8 14h.01M16 14h.01" />
+            </svg></span>Virtual Caseworker</a>
+        <div class="nav-section">CASE MANAGEMENT</div>
+        <a class="nav-item active" href="responses.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="2" width="8" height="4" rx="1" />
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 12h6M9 16h6" />
+            </svg></span>Responses</a>
+        <a class="nav-item" href="crm.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg></span>Mock CRM</a>
+        <div class="nav-section">SYSTEM</div>
+        <a class="nav-item" href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+            </svg></span>Settings</a>
+      </nav>
+      <div class="sidebar-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>Secure demo environment</div>
+    </aside>
+
+    <main class="main">
+      <section id="sec-responses">
+        <div class="page-header row-between">
+          <div>
+            <h1>Responses &amp; Caseworker Review</h1>
+            <p class="page-lead">Review client answers before they reach the CRM.</p>
+            <p class="page-sub">Verify the automated Dynamics CRM field mapping, approve the data, and sync it to the
+              Mock CRM.</p>
+          </div>
+          <div class="row" style="gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="openCaseworkerReviewModal()">
+              📋 Review & Approve for CRM
+            </button>
+            <a class="btn btn-secondary btn-sm" href="crm.html">
+              🏢 Mock CRM Portal
+            </a>
+            <button class="btn btn-secondary btn-sm" onclick="exportResponses()">⬇ Export JSON</button>
+            <button class="btn btn-danger btn-sm" onclick="clearAllResponses()">🗑 Clear</button>
+          </div>
+        </div>
+
+        <!-- Demo Workflow Pipeline Indicator -->
+        <div class="crm-flow-banner">
+          <div
+            style="font-size:11.5px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">
+            Client Intake ➔ Caseworker Review ➔ CRM Integration Flow
+          </div>
+          <div class="crm-flow-steps">
+            <span class="badge badge-gray" style="padding:4px 8px">1. Intake</span>
+            <span style="color:var(--text-muted)">➔</span>
+            <span class="badge badge-blue" style="padding:4px 8px">2. Caseworker Review</span>
+            <span style="color:var(--text-muted)">➔</span>
+            <span class="badge badge-blue" style="padding:4px 8px">3. Approval</span>
+            <span style="color:var(--text-muted)">➔</span>
+            <span class="badge badge-blue" style="padding:4px 8px">4. Field Mapping</span>
+            <span style="color:var(--text-muted)">➔</span>
+            <span class="badge badge-blue" style="padding:4px 8px">5. POST /api/clients</span>
+            <span style="color:var(--text-muted)">➔</span>
+            <span class="badge badge-green" style="padding:4px 8px">6. Client Created</span>
+          </div>
+        </div>
+
+        <!-- Caseworker Review & CRM Integration Status Panel -->
+        <div id="caseworker-crm-panel"></div>
+
+        <!-- Table of Raw Responses -->
+        <div id="responses-content"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ═══ CASEWORKER REVIEW & FIELD MAPPING MODAL ════════════════ -->
+  <div id="caseworker-review-modal"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center">
+    <div
+      style="background:#fff;border-radius:12px;padding:24px 28px;width:min(940px,96vw);max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column">
+      <div class="row-between" style="margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:12px">
+        <div>
+          <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px">
+            <span>📋 Caseworker Review & Approval</span>
+            <span class="badge badge-blue">Dynamics 365 CRM Sync</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--text-muted);margin-top:3px">
+            Verify and adjust client answers, confirm automated field mapping, and approve synchronization to the Mock
+            CRM.
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="closeCaseworkerReviewModal()">✕ Close</button>
+      </div>
+
+      <!-- 2 Column Body: Left=Editable Fields, Right=Mapping Table & Payload -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;overflow-y:auto;flex:1;padding-right:4px">
+        <!-- Left Column: 9 Intake Fields Review & Edit -->
+        <div>
+          <div
+            style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <span>✏️ Intake Data Verification</span>
+            <span style="font-size:11px;color:var(--text-muted);font-weight:normal">(Editable by Caseworker)</span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                <span>Full Name</span>
+                <span class="crm-target-tag">fullname</span>
+              </label>
+              <input type="text" id="cr-name" oninput="updateReviewPayloadPreview()"
+                style="font-size:13px;padding:6px 10px">
+            </div>
+
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                <span>Date of Birth</span>
+                <span class="crm-target-tag">birthdate</span>
+              </label>
+              <input type="text" id="cr-dob" oninput="updateReviewPayloadPreview()" placeholder="YYYY-MM-DD"
+                style="font-size:13px;padding:6px 10px">
+            </div>
+
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                <span>First Arrival Date in Canada</span>
+                <span class="crm-target-tag">firstarrivaldate</span>
+              </label>
+              <input type="text" id="cr-arrival" oninput="updateReviewPayloadPreview()" placeholder="YYYY-MM-DD or date"
+                style="font-size:13px;padding:6px 10px">
+            </div>
+
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
+              <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                  <span>Street Name</span>
+                  <span class="crm-target-tag">address1_line1</span>
+                </label>
+                <input type="text" id="cr-street" oninput="updateReviewPayloadPreview()"
+                  style="font-size:13px;padding:6px 10px">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                  <span>Unit Number</span>
+                  <span class="crm-target-tag">address1_line2</span>
+                </label>
+                <input type="text" id="cr-unit" oninput="updateReviewPayloadPreview()" placeholder="Apt / Suite"
+                  style="font-size:13px;padding:6px 10px">
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                  <span>City</span>
+                  <span class="crm-target-tag">address1_city</span>
+                </label>
+                <input type="text" id="cr-city" oninput="updateReviewPayloadPreview()"
+                  style="font-size:13px;padding:6px 10px">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                  <span>Province</span>
+                  <span class="crm-target-tag">address1_stateorprovince</span>
+                </label>
+                <input type="text" id="cr-province" oninput="updateReviewPayloadPreview()"
+                  style="font-size:13px;padding:6px 10px">
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                  <span>Postal Code</span>
+                  <span class="crm-target-tag">address1_postalcode</span>
+                </label>
+                <input type="text" id="cr-postal" oninput="updateReviewPayloadPreview()"
+                  style="font-size:13px;padding:6px 10px">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                  <span>Country</span>
+                  <span class="crm-target-tag">address1_country</span>
+                </label>
+                <input type="text" id="cr-country" oninput="updateReviewPayloadPreview()" value="Canada"
+                  style="font-size:13px;padding:6px 10px">
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                  <span>Marital Status</span>
+                  <span class="crm-target-tag">familystatuscode</span>
+                </label>
+                <input type="text" id="cr-marital" oninput="updateReviewPayloadPreview()"
+                  placeholder="Married, Single, etc." style="font-size:13px;padding:6px 10px">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:11.5px;display:flex;justify-content:space-between">
+                  <span>Number of Children</span>
+                  <span class="crm-target-tag">numberofchildren</span>
+                </label>
+                <input type="number" min="0" id="cr-children" oninput="updateReviewPayloadPreview()"
+                  style="font-size:13px;padding:6px 10px">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Dynamics CRM Field Mapping & JSON Preview -->
+        <div style="display:flex;flex-direction:column">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">
+            🗺️ Dynamics CRM Field Mapping
+          </div>
+          <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px">
+            <table class="mapping-table">
+              <thead>
+                <tr>
+                  <th>Intake Field</th>
+                  <th>Target CRM Field</th>
+                  <th>Mapped Value</th>
+                </tr>
+              </thead>
+              <tbody id="cr-mapping-tbody"></tbody>
+            </table>
+          </div>
+
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">
+            📦 Payload Preview (POST /api/clients)
+          </div>
+          <div class="crm-json-box" id="cr-json-preview" style="flex:1;min-height:160px"></div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="row-between" style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="cr-approve-check" checked style="width:16px;height:16px">
+          <span><b>Caseworker Approval:</b> I have reviewed and verified this client data.</span>
+        </label>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary btn-sm" onclick="closeCaseworkerReviewModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="submitCaseworkerApproval()">
+            🚀 Approve & Send to Mock CRM
+          </button>
+        </div>
+      </div>
     </div>
   </div>
-  <nav class="nav">
-    <div class="nav-section">ASSESSMENT</div>
-    <a class="nav-item" href="question-engine.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></svg></span>Question Engine</a>
-    <a class="nav-item" href="question-bank.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg></span>Question Bank</a>
-    <a class="nav-item" href="translation.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></span>Translation Engine</a>
-    <div class="nav-section">CLIENT SESSION</div>
-    <a class="nav-item" href="id-scan.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h5M13 14h3"/></svg></span>ID Scan</a>
-    <a class="nav-item" href="interview.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Client Intake</a>
-    <a class="nav-item" href="ai-assistant.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4M8 14h.01M16 14h.01"/></svg></span>Virtual Caseworker</a>
-    <div class="nav-section">CASE MANAGEMENT</div>
-    <a class="nav-item active" href="responses.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 12h6M9 16h6"/></svg></span>Responses</a>
-    <a class="nav-item" href="crm.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Mock CRM</a>
-    <div class="nav-section">SYSTEM</div>
-    <a class="nav-item" href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>Settings</a>
-  </nav>
-  <div class="sidebar-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Secure demo environment</div>
-</aside>
 
-<main class="main">
-  <section id="sec-responses">
-    <div class="page-header row-between">
-      <div>
-        <h1>Responses &amp; Caseworker Review</h1>
-        <p class="page-lead">Review client answers before they reach the CRM.</p>
-        <p class="page-sub">Verify the automated Dynamics CRM field mapping, approve the data, and sync it to the Mock CRM.</p>
+  <!-- ═══ CRM SYNC SUCCESS MODAL ═════════════════════════════════ -->
+  <div id="crm-success-modal"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
+    <div
+      style="background:#fff;border-radius:12px;padding:28px;width:min(580px,92vw);box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center">
+      <div style="font-size:46px;margin-bottom:10px">🎉</div>
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text)">
+        Client Created Successfully!
+      </h2>
+      <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px">
+        Intake data was approved, mapped, and received by the Mock CRM API.
+      </p>
+
+      <div
+        style="display:inline-flex;align-items:center;gap:10px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:10px 20px;margin-bottom:18px">
+        <span style="font-size:12px;color:#1e40af;font-weight:600;text-transform:uppercase">Assigned Client ID:</span>
+        <span style="font-family:monospace;font-size:22px;font-weight:800;color:#1d4ed8" id="success-client-id"></span>
       </div>
-      <div class="row" style="gap:8px">
-        <button class="btn btn-primary btn-sm" onclick="openCaseworkerReviewModal()">
-          📋 Review & Approve for CRM
-        </button>
-        <a class="btn btn-secondary btn-sm" href="crm.html">
-          🏢 Mock CRM Portal
+
+      <div style="text-align:left;margin-bottom:18px">
+        <div style="font-size:11.5px;font-weight:600;color:var(--text-muted);margin-bottom:4px">Mock CRM API Response
+          (HTTP 201):</div>
+        <div class="crm-json-box" id="success-json-response" style="max-height:160px;font-size:11.5px"></div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:center">
+        <a class="btn btn-primary" id="success-crm-link" href="crm.html">
+          🏢 View in Mock CRM Portal
         </a>
-        <button class="btn btn-secondary btn-sm" onclick="exportResponses()">⬇ Export JSON</button>
-        <button class="btn btn-danger btn-sm" onclick="clearAllResponses()">🗑 Clear</button>
-      </div>
-    </div>
-
-    <!-- Demo Workflow Pipeline Indicator -->
-    <div class="crm-flow-banner">
-      <div style="font-size:11.5px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">
-        Client Intake ➔ Caseworker Review ➔ CRM Integration Flow
-      </div>
-      <div class="crm-flow-steps">
-        <span class="badge badge-gray" style="padding:4px 8px">1. Intake</span>
-        <span style="color:var(--text-muted)">➔</span>
-        <span class="badge badge-blue" style="padding:4px 8px">2. Caseworker Review</span>
-        <span style="color:var(--text-muted)">➔</span>
-        <span class="badge badge-blue" style="padding:4px 8px">3. Approval</span>
-        <span style="color:var(--text-muted)">➔</span>
-        <span class="badge badge-blue" style="padding:4px 8px">4. Field Mapping</span>
-        <span style="color:var(--text-muted)">➔</span>
-        <span class="badge badge-blue" style="padding:4px 8px">5. POST /api/clients</span>
-        <span style="color:var(--text-muted)">➔</span>
-        <span class="badge badge-green" style="padding:4px 8px">6. Client Created</span>
-      </div>
-    </div>
-
-    <!-- Caseworker Review & CRM Integration Status Panel -->
-    <div id="caseworker-crm-panel"></div>
-
-    <!-- Table of Raw Responses -->
-    <div id="responses-content"></div>
-  </section>
-</main>
-</div>
-
-<!-- ═══ CASEWORKER REVIEW & FIELD MAPPING MODAL ════════════════ -->
-<div id="caseworker-review-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:12px;padding:24px 28px;width:min(940px,96vw);max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column">
-    <div class="row-between" style="margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:12px">
-      <div>
-        <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px">
-          <span>📋 Caseworker Review & Approval</span>
-          <span class="badge badge-blue">Dynamics 365 CRM Sync</span>
-        </div>
-        <div style="font-size:12.5px;color:var(--text-muted);margin-top:3px">
-          Verify and adjust client answers, confirm automated field mapping, and approve synchronization to the Mock CRM.
-        </div>
-      </div>
-      <button class="btn btn-secondary btn-sm" onclick="closeCaseworkerReviewModal()">✕ Close</button>
-    </div>
-
-    <!-- 2 Column Body: Left=Editable Fields, Right=Mapping Table & Payload -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;overflow-y:auto;flex:1;padding-right:4px">
-      <!-- Left Column: 9 Intake Fields Review & Edit -->
-      <div>
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px">
-          <span>✏️ Intake Data Verification</span>
-          <span style="font-size:11px;color:var(--text-muted);font-weight:normal">(Editable by Caseworker)</span>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div class="form-group" style="margin-bottom:0">
-            <label style="font-size:11.5px;display:flex;justify-content:space-between">
-              <span>Full Name</span>
-              <span class="crm-target-tag">fullname</span>
-            </label>
-            <input type="text" id="cr-name" oninput="updateReviewPayloadPreview()" style="font-size:13px;padding:6px 10px">
-          </div>
-
-          <div class="form-group" style="margin-bottom:0">
-            <label style="font-size:11.5px;display:flex;justify-content:space-between">
-              <span>Date of Birth</span>
-              <span class="crm-target-tag">birthdate</span>
-            </label>
-            <input type="text" id="cr-dob" oninput="updateReviewPayloadPreview()" placeholder="YYYY-MM-DD" style="font-size:13px;padding:6px 10px">
-          </div>
-
-          <div class="form-group" style="margin-bottom:0">
-            <label style="font-size:11.5px;display:flex;justify-content:space-between">
-              <span>First Arrival Date in Canada</span>
-              <span class="crm-target-tag">firstarrivaldate</span>
-            </label>
-            <input type="text" id="cr-arrival" oninput="updateReviewPayloadPreview()" placeholder="YYYY-MM-DD or date" style="font-size:13px;padding:6px 10px">
-          </div>
-
-          <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
-            <div class="form-group" style="margin-bottom:0">
-              <label style="font-size:11.5px;display:flex;justify-content:space-between">
-                <span>Street Name</span>
-                <span class="crm-target-tag">address1_line1</span>
-              </label>
-              <input type="text" id="cr-street" oninput="updateReviewPayloadPreview()" style="font-size:13px;padding:6px 10px">
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label style="font-size:11.5px;display:flex;justify-content:space-between">
-                <span>Unit Number</span>
-                <span class="crm-target-tag">address1_line2</span>
-              </label>
-              <input type="text" id="cr-unit" oninput="updateReviewPayloadPreview()" placeholder="Apt / Suite" style="font-size:13px;padding:6px 10px">
-            </div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div class="form-group" style="margin-bottom:0">
-              <label style="font-size:11.5px;display:flex;justify-content:space-between">
-                <span>City</span>
-                <span class="crm-target-tag">address1_city</span>
-              </label>
-              <input type="text" id="cr-city" oninput="updateReviewPayloadPreview()" style="font-size:13px;padding:6px 10px">
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label style="font-size:11.5px;display:flex;justify-content:space-between">
-                <span>Province</span>
-                <span class="crm-target-tag">address1_stateorprovince</span>
-              </label>
-              <input type="text" id="cr-province" oninput="updateReviewPayloadPreview()" style="font-size:13px;padding:6px 10px">
-            </div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div class="form-group" style="margin-bottom:0">
-              <label style="font-size:11.5px;display:flex;justify-content:space-between">
-                <span>Postal Code</span>
-                <span class="crm-target-tag">address1_postalcode</span>
-              </label>
-              <input type="text" id="cr-postal" oninput="updateReviewPayloadPreview()" style="font-size:13px;padding:6px 10px">
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label style="font-size:11.5px;display:flex;justify-content:space-between">
-                <span>Country</span>
-                <span class="crm-target-tag">address1_country</span>
-              </label>
-              <input type="text" id="cr-country" oninput="updateReviewPayloadPreview()" value="Canada" style="font-size:13px;padding:6px 10px">
-            </div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div class="form-group" style="margin-bottom:0">
-              <label style="font-size:11.5px;display:flex;justify-content:space-between">
-                <span>Marital Status</span>
-                <span class="crm-target-tag">familystatuscode</span>
-              </label>
-              <input type="text" id="cr-marital" oninput="updateReviewPayloadPreview()" placeholder="Married, Single, etc." style="font-size:13px;padding:6px 10px">
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label style="font-size:11.5px;display:flex;justify-content:space-between">
-                <span>Number of Children</span>
-                <span class="crm-target-tag">numberofchildren</span>
-              </label>
-              <input type="number" min="0" id="cr-children" oninput="updateReviewPayloadPreview()" style="font-size:13px;padding:6px 10px">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Column: Dynamics CRM Field Mapping & JSON Preview -->
-      <div style="display:flex;flex-direction:column">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">
-          🗺️ Dynamics CRM Field Mapping
-        </div>
-        <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px">
-          <table class="mapping-table">
-            <thead>
-              <tr>
-                <th>Intake Field</th>
-                <th>Target CRM Field</th>
-                <th>Mapped Value</th>
-              </tr>
-            </thead>
-            <tbody id="cr-mapping-tbody"></tbody>
-          </table>
-        </div>
-
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">
-          📦 Payload Preview (POST /api/clients)
-        </div>
-        <div class="crm-json-box" id="cr-json-preview" style="flex:1;min-height:160px"></div>
-      </div>
-    </div>
-
-    <!-- Modal Footer -->
-    <div class="row-between" style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="cr-approve-check" checked style="width:16px;height:16px">
-        <span><b>Caseworker Approval:</b> I have reviewed and verified this client data.</span>
-      </label>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-secondary btn-sm" onclick="closeCaseworkerReviewModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="submitCaseworkerApproval()">
-          🚀 Approve & Send to Mock CRM
+        <button class="btn btn-secondary" onclick="closeCrmSuccessModal()">
+          Done
         </button>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ═══ CRM SYNC SUCCESS MODAL ═════════════════════════════════ -->
-<div id="crm-success-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:12px;padding:28px;width:min(580px,92vw);box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center">
-    <div style="font-size:46px;margin-bottom:10px">🎉</div>
-    <h2 style="font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text)">
-      Client Created Successfully!
-    </h2>
-    <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px">
-      Intake data was approved, mapped, and received by the Mock CRM API.
-    </p>
+  <div class="toast-container" id="toast-container"></div>
 
-    <div style="display:inline-flex;align-items:center;gap:10px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:10px 20px;margin-bottom:18px">
-      <span style="font-size:12px;color:#1e40af;font-weight:600;text-transform:uppercase">Assigned Client ID:</span>
-      <span style="font-family:monospace;font-size:22px;font-weight:800;color:#1d4ed8" id="success-client-id"></span>
-    </div>
-
-    <div style="text-align:left;margin-bottom:18px">
-      <div style="font-size:11.5px;font-weight:600;color:var(--text-muted);margin-bottom:4px">Mock CRM API Response (HTTP 201):</div>
-      <div class="crm-json-box" id="success-json-response" style="max-height:160px;font-size:11.5px"></div>
-    </div>
-
-    <div style="display:flex;gap:10px;justify-content:center">
-      <a class="btn btn-primary" id="success-crm-link" href="crm.html">
-        🏢 View in Mock CRM Portal
-      </a>
-      <button class="btn btn-secondary" onclick="closeCrmSuccessModal()">
-        Done
-      </button>
-    </div>
-  </div>
-</div>
-
-<div class="toast-container" id="toast-container"></div>
-
-<script src="config.js"></script>
-<script src="js/app.js?v=58"></script>
+  <script src="config.js"></script>
+  <script src="js/app.js?v=58"></script>
 </body>
+
 </html>

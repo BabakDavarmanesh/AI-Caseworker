@@ -1,112 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Translation Engine — CaseBridge AI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Translation Engine — CaseBridge AI</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/app.css">
 </head>
+
 <body data-page="translation">
-<div class="layout">
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">
-  <svg viewBox="0 0 24 24">
-    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-    <circle cx="12" cy="12" r="3.5"/>
-  </svg>
-</div>
-    <div>
-      <div class="logo-text">CaseBridge AI</div>
-      <div class="logo-sub">Hackathon Demo</div>
-    </div>
-  </div>
-  <nav class="nav">
-    <div class="nav-section">ASSESSMENT</div>
-    <a class="nav-item" href="question-engine.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></svg></span>Question Engine</a>
-    <a class="nav-item" href="question-bank.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg></span>Question Bank</a>
-    <a class="nav-item active" href="translation.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></span>Translation Engine</a>
-    <div class="nav-section">CLIENT SESSION</div>
-    <a class="nav-item" href="id-scan.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h5M13 14h3"/></svg></span>ID Scan</a>
-    <a class="nav-item" href="interview.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Client Intake</a>
-    <a class="nav-item" href="ai-assistant.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4M8 14h.01M16 14h.01"/></svg></span>Virtual Caseworker</a>
-    <div class="nav-section">CASE MANAGEMENT</div>
-    <a class="nav-item" href="responses.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 12h6M9 16h6"/></svg></span>Responses</a>
-    <a class="nav-item" href="crm.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Mock CRM</a>
-    <div class="nav-section">SYSTEM</div>
-    <a class="nav-item" href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>Settings</a>
-  </nav>
-  <div class="sidebar-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Secure demo environment</div>
-</aside>
-<main class="main">
-<section id="sec-translation">
-      <div class="page-header row-between">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M22 8 a10 10 0 1 0 0 16" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none" />
+            <path d="M10 8 a10 10 0 1 1 0 16" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none"
+              opacity=".55" />
+          </svg>
+        </div>
         <div>
-          <h1>Translation Engine</h1>
-          <p class="page-lead">Translate the question bank into multiple languages and track progress in real time.</p>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-secondary btn-sm" onclick="clearAllTranslations()">🗑 Clear All</button>
+          <div class="logo-text">CaseBridge AI</div>
+          <div class="logo-sub">Hackathon Demo</div>
         </div>
       </div>
-
-      <!-- Translation Control Center: summary + flow (visual layer only) -->
-      <div class="tx-center" id="tx-center">
-        <svg class="tx-globe" viewBox="0 0 200 200" aria-hidden="true">
-          <circle cx="100" cy="100" r="78"/>
-          <ellipse cx="100" cy="100" rx="78" ry="28"/>
-          <ellipse cx="100" cy="100" rx="78" ry="56"/>
-          <ellipse cx="100" cy="100" rx="28" ry="78"/>
-          <ellipse cx="100" cy="100" rx="56" ry="78"/>
-          <line x1="22" y1="100" x2="178" y2="100"/>
-          <line x1="100" y1="22" x2="100" y2="178"/>
-          <ellipse class="tx-orbit" cx="100" cy="100" rx="96" ry="38" transform="rotate(-18 100 100)"/>
-          <circle class="tx-orbit-dot" r="2.6"><animateMotion dur="26s" repeatCount="indefinite" path="M 8.7 129.7 A 96 38 -18 1 1 191.3 70.3 A 96 38 -18 1 1 8.7 129.7"/></circle>
-        </svg>
-
-        <div class="tx-summary" id="tx-summary" aria-label="Translation summary">
-          <div class="tx-stat"><span class="tx-stat-num" id="tx-stat-total">0</span><span class="tx-stat-label">Total languages</span></div>
-          <div class="tx-stat tx-stat-complete"><span class="tx-stat-num"><i class="tx-dot"></i><span id="tx-stat-complete">0</span></span><span class="tx-stat-label">Completed</span></div>
-          <div class="tx-stat tx-stat-active"><span class="tx-stat-num"><i class="tx-dot"></i><span id="tx-stat-active">0</span></span><span class="tx-stat-label">Translating</span></div>
-          <div class="tx-stat tx-stat-pending"><span class="tx-stat-num"><i class="tx-dot"></i><span id="tx-stat-pending">0</span></span><span class="tx-stat-label">Pending</span></div>
-          <div class="tx-stat tx-stat-error" id="tx-stat-error-wrap" hidden><span class="tx-stat-num"><i class="tx-dot"></i><span id="tx-stat-error">0</span></span><span class="tx-stat-label">Needs retry</span></div>
-        </div>
-      </div>
-
-      <!-- Active Language Spotlight. Same IDs as before (tx-progress-*), driven by startTranslation(). -->
-      <div id="tx-progress-wrap" class="tx-spotlight" style="display:none" aria-live="polite">
-        <div class="tx-spot-flag" id="tx-spot-flag"></div>
-        <div class="tx-spot-body">
-          <div class="tx-spot-head">
-            <div>
-              <div class="tx-spot-label" id="tx-progress-label">Translating…</div>
-              <div class="tx-spot-sub" id="tx-spot-sub"></div>
-            </div>
-            <div class="tx-spot-pct" id="tx-spot-pct">0%</div>
+      <nav class="nav">
+        <div class="nav-section">ASSESSMENT</div>
+        <a class="nav-item" href="question-engine.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z" />
+            </svg></span>Question Engine</a>
+        <a class="nav-item" href="question-bank.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z" />
+              <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
+            </svg></span>Question Bank</a>
+        <a class="nav-item active" href="translation.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" />
+            </svg></span>Translation Engine</a>
+        <div class="nav-section">CLIENT SESSION</div>
+        <a class="nav-item" href="id-scan.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <circle cx="8" cy="12" r="2.5" />
+              <path d="M13 10h5M13 14h3" />
+            </svg></span>ID Scan</a>
+        <a class="nav-item" href="interview.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg></span>Client Intake</a>
+        <a class="nav-item" href="ai-assistant.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="8" width="18" height="12" rx="2" />
+              <path d="M12 8V4M8 14h.01M16 14h.01" />
+            </svg></span>Virtual Caseworker</a>
+        <div class="nav-section">CASE MANAGEMENT</div>
+        <a class="nav-item" href="responses.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="2" width="8" height="4" rx="1" />
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 12h6M9 16h6" />
+            </svg></span>Responses</a>
+        <a class="nav-item" href="crm.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg></span>Mock CRM</a>
+        <div class="nav-section">SYSTEM</div>
+        <a class="nav-item" href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+            </svg></span>Settings</a>
+      </nav>
+      <div class="sidebar-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>Secure demo environment</div>
+    </aside>
+    <main class="main">
+      <section id="sec-translation">
+        <div class="page-header row-between">
+          <div>
+            <h1>Translation Engine</h1>
+            <p class="page-lead">Translate the question bank into multiple languages and track progress in real time.
+            </p>
           </div>
-          <div class="tx-spot-track"><div id="tx-progress-bar" class="tx-spot-fill" style="width:0%"></div></div>
-          <div class="tx-spot-count" id="tx-progress-count"></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="clearAllTranslations()">🗑 Clear All</button>
+          </div>
         </div>
-      </div>
 
-      <div id="tx-lang-grid" class="tx-grid"></div>
+        <!-- Translation Control Center: summary + flow (visual layer only) -->
+        <div class="tx-center" id="tx-center">
+          <svg class="tx-globe" viewBox="0 0 200 200" aria-hidden="true">
+            <circle cx="100" cy="100" r="78" />
+            <ellipse cx="100" cy="100" rx="78" ry="28" />
+            <ellipse cx="100" cy="100" rx="78" ry="56" />
+            <ellipse cx="100" cy="100" rx="28" ry="78" />
+            <ellipse cx="100" cy="100" rx="56" ry="78" />
+            <line x1="22" y1="100" x2="178" y2="100" />
+            <line x1="100" y1="22" x2="100" y2="178" />
+            <ellipse class="tx-orbit" cx="100" cy="100" rx="96" ry="38" transform="rotate(-18 100 100)" />
+            <circle class="tx-orbit-dot" r="2.6">
+              <animateMotion dur="26s" repeatCount="indefinite"
+                path="M 8.7 129.7 A 96 38 -18 1 1 191.3 70.3 A 96 38 -18 1 1 8.7 129.7" />
+            </circle>
+          </svg>
 
-      <div id="tx-viewer" style="display:none">
-        <div class="row-between" style="margin-bottom:12px">
-          <div style="font-size:14px;font-weight:700;color:var(--text)" id="tx-viewer-title"></div>
-          <button class="btn btn-secondary btn-sm" onclick="closeTxViewer()">✕ Close</button>
+          <div class="tx-summary" id="tx-summary" aria-label="Translation summary">
+            <div class="tx-stat"><span class="tx-stat-num" id="tx-stat-total">0</span><span class="tx-stat-label">Total
+                languages</span></div>
+            <div class="tx-stat tx-stat-complete"><span class="tx-stat-num"><i class="tx-dot"></i><span
+                  id="tx-stat-complete">0</span></span><span class="tx-stat-label">Completed</span></div>
+            <div class="tx-stat tx-stat-active"><span class="tx-stat-num"><i class="tx-dot"></i><span
+                  id="tx-stat-active">0</span></span><span class="tx-stat-label">Translating</span></div>
+            <div class="tx-stat tx-stat-pending"><span class="tx-stat-num"><i class="tx-dot"></i><span
+                  id="tx-stat-pending">0</span></span><span class="tx-stat-label">Pending</span></div>
+            <div class="tx-stat tx-stat-error" id="tx-stat-error-wrap" hidden><span class="tx-stat-num"><i
+                  class="tx-dot"></i><span id="tx-stat-error">0</span></span><span class="tx-stat-label">Needs
+                retry</span></div>
+          </div>
         </div>
-        <div id="tx-viewer-list"></div>
-      </div>
-    </section>
-</main>
-</div>
-<div class="toast-container" id="toast-container"></div>
 
-<script src="config.js"></script>
-<script src="js/app.js?v=58"></script>
+        <!-- Active Language Spotlight. Same IDs as before (tx-progress-*), driven by startTranslation(). -->
+        <div id="tx-progress-wrap" class="tx-spotlight" style="display:none" aria-live="polite">
+          <div class="tx-spot-flag" id="tx-spot-flag"></div>
+          <div class="tx-spot-body">
+            <div class="tx-spot-head">
+              <div>
+                <div class="tx-spot-label" id="tx-progress-label">Translating…</div>
+                <div class="tx-spot-sub" id="tx-spot-sub"></div>
+              </div>
+              <div class="tx-spot-pct" id="tx-spot-pct">0%</div>
+            </div>
+            <div class="tx-spot-track">
+              <div id="tx-progress-bar" class="tx-spot-fill" style="width:0%"></div>
+            </div>
+            <div class="tx-spot-count" id="tx-progress-count"></div>
+          </div>
+        </div>
+
+        <div id="tx-lang-grid" class="tx-grid"></div>
+
+        <div id="tx-viewer" style="display:none">
+          <div class="row-between" style="margin-bottom:12px">
+            <div style="font-size:14px;font-weight:700;color:var(--text)" id="tx-viewer-title"></div>
+            <button class="btn btn-secondary btn-sm" onclick="closeTxViewer()">✕ Close</button>
+          </div>
+          <div id="tx-viewer-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="config.js"></script>
+  <script src="js/app.js?v=58"></script>
 </body>
+
 </html>
