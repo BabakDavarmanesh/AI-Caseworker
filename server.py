@@ -611,6 +611,10 @@ class Handler(SimpleHTTPRequestHandler):
                 "avatarCharacter", "avatarStyle", "avatarVoice"
             ]
             ordered = {k: clean[k] for k in ordered_keys}
+            # Every other allowed key too (e.g. the Gemini avatar settings);
+            # before, they were silently dropped from config.js on save.
+            for k in sorted(ALLOWED_KEYS - set(ordered_keys)):
+                ordered[k] = clean[k]
             payload = (
                 "// AI Caseworker portable configuration.\n"
                 "// Updated automatically by Save Settings.\n"

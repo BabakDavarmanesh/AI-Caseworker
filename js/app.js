@@ -156,7 +156,7 @@ const DEFAULT_SETTINGS = {
   avatarCharacter:   'lisa',
   avatarStyle:       'casual-sitting',
   avatarVoice:       'en-US-LunaNeural',
-  avatarProvider:    'azure',              // 'azure' = Lisa, 'gemini' = Gemini Live avatar
+  avatarProvider:    'gemini',             // Gemini Live avatar ('azure' = Lisa, no longer offered in Settings)
   geminiAvatarName:  'Kira',
   geminiAvatarVoice: 'zephyr',
   geminiLiveModel:   'gemini-3.8-live',
@@ -3664,67 +3664,43 @@ function toast(msg, type = 'info') {
 }
 
 // ─── Settings ─────────────────────────────────────────────────
+// Settings-page fields: [element id, settings key, default]. A field that is not
+// on the page keeps its saved value. The Azure fields were removed from the
+// Settings page, but the saved Azure Speech key is still used for listening
+// (speech-to-text), so it must survive every save.
+const SETTINGS_FORM_FIELDS = [
+  ['s-gcp-project',          'gcpProjectId',       ''],
+  ['s-gcp-location',         'gcpLocation',        'us'],
+  ['s-gcp-processor',        'gcpProcessorId',     ''],
+  ['s-gcp-credentials',      'gcpCredentialsFile', 'google-service-account.json'],
+  ['s-gemini-location',      'geminiLocation',     'global'],
+  ['s-gemini-model',         'geminiModel',        'gemini-3.8-flash'],
+  ['s-google-tts-model',     'googleTtsModel',     'gemini-2.5-flash-tts'],
+  ['s-google-tts-voice',     'googleTtsVoice',     'Kore'],
+  ['s-gemini-avatar-name',   'geminiAvatarName',   'Kira'],
+  ['s-gemini-avatar-voice',  'geminiAvatarVoice',  'zephyr'],
+  ['s-gemini-live-model',    'geminiLiveModel',    'gemini-3.8-live'],
+  ['s-gemini-live-location', 'geminiLiveLocation', 'us-central1']
+];
+
 function populateSettingsForm() {
   const s = loadSettings();
-  document.getElementById('s-gcp-project').value        = s.gcpProjectId     || '';
-  document.getElementById('s-gcp-location').value       = s.gcpLocation      || 'us';
-  document.getElementById('s-gcp-processor').value      = s.gcpProcessorId   || '';
-  document.getElementById('s-gcp-credentials').value    = s.gcpCredentialsFile || 'google-service-account.json';
-  document.getElementById('s-gemini-location').value    = s.geminiLocation   || 'global';
-  document.getElementById('s-gemini-model').value       = s.geminiModel      || 'gemini-3.8-flash';
-  document.getElementById('s-speech-region').value      = s.speechRegion       || '';
-  document.getElementById('s-speech-key').value         = s.speechKey          || '';
-  const speechVoiceEl = document.getElementById('s-speech-voice');
-  if (speechVoiceEl) speechVoiceEl.value = s.speechVoice || 'en-US-LunaNeural';
-  const vpEl = document.getElementById('s-voice-provider');
-  if (vpEl) vpEl.value = s.voiceProvider || 'google';
-  const gtmEl = document.getElementById('s-google-tts-model');
-  if (gtmEl) gtmEl.value = s.googleTtsModel || 'gemini-2.5-flash-tts';
-  const gtvEl = document.getElementById('s-google-tts-voice');
-  if (gtvEl) gtvEl.value = s.googleTtsVoice || 'Kore';
-
-  document.getElementById('s-avatar-resource').value  = s.avatarResourceName || 'ai-caseworker-avatar';
-  document.getElementById('s-avatar-endpoint').value  = s.avatarEndpoint || 'https://francecentral.api.cognitive.microsoft.com/';
-  document.getElementById('s-avatar-region').value    = s.avatarRegion || 'francecentral';
-  document.getElementById('s-avatar-key').value       = s.avatarKey || '';
-  document.getElementById('s-avatar-character').value = s.avatarCharacter || 'lisa';
-  document.getElementById('s-avatar-style').value     = s.avatarStyle || 'casual-sitting';
-  document.getElementById('s-avatar-voice').value     = s.avatarVoice || 'en-US-LunaNeural';
-  const setIf = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
-  setIf('s-avatar-provider', s.avatarProvider || 'azure');
-  setIf('s-gemini-avatar-name', s.geminiAvatarName || 'Kira');
-  setIf('s-gemini-avatar-voice', s.geminiAvatarVoice || 'zephyr');
-  setIf('s-gemini-live-model', s.geminiLiveModel || 'gemini-3.8-live');
-  setIf('s-gemini-live-location', s.geminiLiveLocation || 'us-central1');
+  SETTINGS_FORM_FIELDS.forEach(([id, key, def]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = s[key] || def;
+  });
 }
 
 async function saveSettings() {
-  const settings = {
-    gcpProjectId:      document.getElementById('s-gcp-project').value.trim(),
-    gcpLocation:       document.getElementById('s-gcp-location').value || 'us',
-    gcpProcessorId:    document.getElementById('s-gcp-processor').value.trim(),
-    gcpCredentialsFile:document.getElementById('s-gcp-credentials').value.trim() || 'google-service-account.json',
-    geminiLocation:    document.getElementById('s-gemini-location').value.trim() || 'global',
-    geminiModel:       document.getElementById('s-gemini-model').value.trim() || 'gemini-3.8-flash',
-    speechRegion:       document.getElementById('s-speech-region').value.trim(),
-    speechKey:          document.getElementById('s-speech-key').value.trim(),
-    speechVoice:        (document.getElementById('s-speech-voice')?.value || 'en-US-LunaNeural').trim(),
-    voiceProvider:      document.getElementById('s-voice-provider')?.value || 'google',
-    googleTtsModel:     (document.getElementById('s-google-tts-model')?.value || 'gemini-2.5-flash-tts').trim(),
-    googleTtsVoice:     (document.getElementById('s-google-tts-voice')?.value || 'Kore').trim(),
-    avatarResourceName: document.getElementById('s-avatar-resource').value.trim(),
-    avatarEndpoint:     document.getElementById('s-avatar-endpoint').value.trim(),
-    avatarRegion:       document.getElementById('s-avatar-region').value.trim(),
-    avatarKey:          document.getElementById('s-avatar-key').value.trim(),
-    avatarCharacter:    (document.getElementById('s-avatar-character').value || 'lisa').trim(),
-    avatarStyle:        (document.getElementById('s-avatar-style').value || 'casual-sitting').trim(),
-    avatarVoice:        (document.getElementById('s-avatar-voice').value || 'en-US-LunaNeural').trim(),
-    avatarProvider:     document.getElementById('s-avatar-provider')?.value || 'azure',
-    geminiAvatarName:   (document.getElementById('s-gemini-avatar-name')?.value || 'Kira').trim(),
-    geminiAvatarVoice:  (document.getElementById('s-gemini-avatar-voice')?.value || 'zephyr').trim(),
-    geminiLiveModel:    (document.getElementById('s-gemini-live-model')?.value || 'gemini-3.8-live').trim(),
-    geminiLiveLocation: (document.getElementById('s-gemini-live-location')?.value || 'us-central1').trim()
-  };
+  // Start from everything already saved, then apply the fields on the page.
+  const settings = Object.assign({}, DEFAULT_SETTINGS, loadSettings());
+  SETTINGS_FORM_FIELDS.forEach(([id, key, def]) => {
+    const el = document.getElementById(id);
+    if (el) settings[key] = String(el.value || '').trim() || def;
+  });
+  // The interview voice and the Virtual Caseworker avatar are Gemini only.
+  settings.voiceProvider = 'google';
+  settings.avatarProvider = 'gemini';
 
   // Keep current-session behavior unchanged.
   persistSettings(settings);
