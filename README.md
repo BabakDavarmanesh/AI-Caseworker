@@ -6,7 +6,7 @@ Hackathon prototype: plain HTML/JavaScript pages plus a small Python server. **A
 
 ## Run
 
-1. Put your Google service-account key in this folder as `google-service-account.json` (see *Google Cloud setup*).
+1. Put your Google service-account key in this folder as `google-service-account.json`.
 2. Double-click `start-ai-caseworker.bat`. It installs `google-auth` and `requests`, starts `server.py` on port 5512 and opens `http://localhost:5512/index.html`.
 3. Open **Settings**, check the values and click **Save Settings** (they are written to `config.js`).
 
