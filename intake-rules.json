@@ -1,0 +1,32 @@
+{
+  "fields": {
+    "full_name": {
+      "matchQuestions": ["what is your full name", "full name", "what is your name"],
+      "answerType": "person_name",
+      "required": true,
+      "confirmationRequired": true,
+      "spellingRequired": true,
+      "components": ["firstName", "middleName", "lastName"],
+      "maxCorrectionAttempts": 4
+    },
+    "country_of_birth": {
+      "matchQuestions": ["what is your country of birth", "country of birth"],
+      "answerType": "country",
+      "required": true,
+      "confirmationRequired": true,
+      "spellingRequired": false,
+      "components": ["country"],
+      "maxCorrectionAttempts": 3
+    },
+    "current_address": {
+      "matchQuestions": ["what is your current address", "current address", "home address"],
+      "answerType": "address",
+      "required": true,
+      "confirmationRequired": true,
+      "spellingRequired": false,
+      "components": ["unitNumber", "streetNumber", "streetName", "streetType", "city", "province", "postalCode", "country"],
+      "requiredComponents": ["streetNumber", "streetName", "city", "province", "postalCode"],
+      "maxCorrectionAttempts": 3
+    }
+  }
+}
