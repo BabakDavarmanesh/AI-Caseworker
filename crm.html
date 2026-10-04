@@ -118,6 +118,7 @@
     <a class="nav-item" href="question-bank.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg></span>Question Bank</a>
     <a class="nav-item" href="translation.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></span>Translation Engine</a>
     <div class="nav-section">CLIENT SESSION</div>
+    <a class="nav-item" href="id-scan.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h5M13 14h3"/></svg></span>ID Scan</a>
     <a class="nav-item" href="interview.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Client Intake</a>
     <a class="nav-item" href="ai-assistant.html"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4M8 14h.01M16 14h.01"/></svg></span>Virtual Caseworker</a>
     <div class="nav-section">CASE MANAGEMENT</div>
@@ -195,7 +196,7 @@
           <span id="crm-table-badge" style="margin-left:8px;font-size:12px;color:var(--text-muted)">0 records</span>
         </div>
         <div style="font-size:12px;color:var(--text-muted)">
-          Mapped Dynamics 365 fields: <span class="crm-field-pill">address1_*</span> <span class="crm-field-pill">firstarrivaldate</span> <span class="crm-field-pill">familystatuscode</span> <span class="crm-field-pill">numberofchildren</span>
+          Mapped Dynamics 365 fields: <span class="crm-field-pill">fullname</span> <span class="crm-field-pill">birthdate</span> <span class="crm-field-pill">address1_*</span> <span class="crm-field-pill">firstarrivaldate</span> <span class="crm-field-pill">familystatuscode</span> <span class="crm-field-pill">numberofchildren</span>
         </div>
       </div>
 
@@ -275,7 +276,7 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script src="config.js"></script>
-<script src="js/app.js?v=49"></script>
+<script src="js/app.js?v=54"></script>
 <script>
 let _crmClients = [];
 
@@ -352,11 +353,13 @@ function renderCrmTable(clients) {
     const children = (c.numberofchildren !== undefined && c.numberofchildren !== '') ? c.numberofchildren : (c.numberOfChildren !== undefined ? c.numberOfChildren : '—');
     const createdStr = c.createdAt ? new Date(c.createdAt).toLocaleString() : '—';
     const name = c.fullname || c.name || 'Client Record';
+    const dob = c.birthdate || c.dateOfBirth || '—';
 
     return `
       <tr>
         <td><span class="badge-crm-id">${esc(c.clientId || `CRM-${1001 + idx}`)}</span></td>
         <td style="font-weight:600;white-space:nowrap">${esc(name)}</td>
+        <td style="white-space:nowrap;font-size:12.5px">${esc(dob)}</td>
         <td style="min-width:230px;max-width:320px;font-size:13px">
           <div>${esc(line1)} ${line2 ? `<span style="color:var(--text-muted)">(${esc(line2)})</span>` : ''}</div>
           <div style="font-size:11.5px;color:var(--text-muted)">${esc(city)}${city && prov ? ', ' : ''}${esc(prov)} ${esc(postal)} • ${esc(country)}</div>
@@ -380,6 +383,7 @@ function renderCrmTable(clients) {
           <tr>
             <th>Client ID</th>
             <th>Full Name</th>
+            <th>Date of Birth</th>
             <th>Address (address1_*)</th>
             <th>First Arrival Date</th>
             <th>Marital Status</th>
@@ -408,7 +412,8 @@ function viewPayloadModal(client) {
     `<div><span style="color:var(--text-muted)">firstarrivaldate:</span> <b>${esc(client.firstarrivaldate || '—')}</b></div>`,
     `<div><span style="color:var(--text-muted)">familystatuscode:</span> <b>${esc(client.familystatuscode || '—')}</b></div>`,
     `<div><span style="color:var(--text-muted)">numberofchildren:</span> <b>${esc(client.numberofchildren !== undefined ? client.numberofchildren : '—')}</b></div>`,
-    `<div><span style="color:var(--text-muted)">fullname:</span> <b>${esc(client.fullname || '—')}</b></div>`
+    `<div><span style="color:var(--text-muted)">fullname:</span> <b>${esc(client.fullname || '—')}</b></div>`,
+    `<div><span style="color:var(--text-muted)">birthdate:</span> <b>${esc(client.birthdate || '—')}</b></div>`
   ].join('');
   document.getElementById('modal-field-breakdown').innerHTML = pills;
 
@@ -479,6 +484,7 @@ function openTestModal() {
   // Empty field template: fill in your own test values.
   const sample = {
     fullname: "",
+    birthdate: "",
     firstarrivaldate: "",
     address1_line1: "",
     address1_line2: "",

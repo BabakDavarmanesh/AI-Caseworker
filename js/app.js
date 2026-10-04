@@ -326,8 +326,8 @@ function _psApplyState(phase) {
   const cfg = PIPELINE_PHASES[phase] || {};
   _ps.shownPhase = phase;
   _ps.root.classList.toggle('is-working', !!cfg.step);
-  _ps.root.classList.toggle('is-success', phase === 'done');
-  _ps.root.classList.toggle('is-error', phase === 'error');
+  _ps.root.classList.toggle('is-success', phase === 'done' || !!cfg.success);
+  _ps.root.classList.toggle('is-error', phase === 'error' || !!cfg.error);
   _ps.root.classList.toggle('is-slow', _ps.slowPhase === phase);
 }
 
@@ -3100,10 +3100,16 @@ function loadDemoIntakeQuestions() {
   toast('Demo intake questions loaded (10 questions matching CRM intake fields)', 'success');
 }
 
+// Details read from the client's ID on the ID Scan page (localStorage "aic_id_scan").
+function loadIdScanRecord() {
+  try { return JSON.parse(localStorage.getItem('aic_id_scan') || 'null'); } catch { return null; }
+}
+
 // Extract 9 required intake fields from saved responses
 function extractIntakeFields(responses = []) {
   const fields = {
     fullName: '',
+    dateOfBirth: '',
     firstArrivalDateInCanada: '',
     streetName: '',
     unitNumber: '',
@@ -3116,6 +3122,12 @@ function extractIntakeFields(responses = []) {
   };
 
   if (!Array.isArray(responses) || !responses.length) {
+    const id = loadIdScanRecord();
+    if (id) {
+      fields.fullName = id.fullName || '';
+      fields.dateOfBirth = id.dateOfBirth || '';
+      fields.fromIdScan = true;
+    }
     return fields;
   }
 
@@ -3146,6 +3158,8 @@ function extractIntakeFields(responses = []) {
 
     if (fk === 'full_name' || q.includes('full name') || (q.includes('your name') && !q.includes('street'))) {
       if (!fields.fullName) fields.fullName = val;
+    } else if (fk === 'date_of_birth' || q.includes('date of birth') || q.includes('birth date') || q.includes('when were you born')) {
+      if (!fields.dateOfBirth) fields.dateOfBirth = val;
     } else if (fk === 'first_arrival_date' || q.includes('arrival date') || q.includes('arrive in canada') || q.includes('landed') || (q.includes('arriv') && q.includes('canada'))) {
       if (!fields.firstArrivalDateInCanada) fields.firstArrivalDateInCanada = val;
     } else if (fk === 'street_name' || q.includes('street name') || (q.includes('street') && !q.includes('number'))) {
@@ -3170,6 +3184,14 @@ function extractIntakeFields(responses = []) {
 
   // Fallback defaults for cleaner demo display if partially missing
   if (!fields.country) fields.country = 'Canada';
+
+  // The scanned ID document is authoritative for name and date of birth.
+  const id = loadIdScanRecord();
+  if (id) {
+    if (id.fullName) fields.fullName = id.fullName;
+    if (id.dateOfBirth) fields.dateOfBirth = id.dateOfBirth;
+    fields.fromIdScan = true;
+  }
   return fields;
 }
 
@@ -3188,6 +3210,7 @@ function mapIntakeToCrm(fields) {
       ? (isNaN(Number(fields.numberOfChildren)) ? fields.numberOfChildren : Number(fields.numberOfChildren))
       : '',
     fullname: fields.fullName || '',
+    birthdate: fields.dateOfBirth || '',
     crm_metadata: {
       source: 'AI Caseworker Intake',
       status: 'Approved',
@@ -3203,7 +3226,7 @@ function renderCaseworkerCrmPanel() {
   if (!panel) return;
 
   const rs = loadResponses();
-  if (!rs.length) {
+  if (!rs.length && !loadIdScanRecord()) {
     panel.innerHTML = '';
     return;
   }
@@ -3242,6 +3265,14 @@ function renderCaseworkerCrmPanel() {
 
       <!-- Quick 9 Fields Breakdown -->
       <div class="crm-field-grid">
+        <div class="crm-field-card">
+          <div class="crm-field-label">
+            <span>Name &amp; Date of Birth${fields.fromIdScan ? ' <span style="font-weight:500;color:var(--text-muted)">(from ID scan)</span>' : ''}</span>
+            <span class="crm-target-tag">fullname / birthdate</span>
+          </div>
+          <div class="crm-field-val">${esc(fields.fullName || '—')} • ${esc(fields.dateOfBirth || '—')}</div>
+        </div>
+
         <div class="crm-field-card">
           <div class="crm-field-label">
             <span>First Arrival Date</span>
@@ -3296,12 +3327,14 @@ function renderCaseworkerCrmPanel() {
 // Open Caseworker Review & Field Mapping Modal
 function openCaseworkerReviewModal() {
   const rs = loadResponses();
-  if (!rs.length) {
-    toast('No responses yet — complete a Client Intake first.', 'info');
+  if (!rs.length && !loadIdScanRecord()) {
+    toast('No responses yet — scan the ID or complete a Client Intake first.', 'info');
     return;
   }
   const fields = extractIntakeFields(rs);
 
+  const elDob = document.getElementById('cr-dob');
+  if (elDob) elDob.value = fields.dateOfBirth || '';
   const elName = document.getElementById('cr-name');
   const elArrival = document.getElementById('cr-arrival');
   const elStreet = document.getElementById('cr-street');
@@ -3342,6 +3375,7 @@ function updateReviewPayloadPreview() {
 
   const current = {
     fullName: getVal('cr-name'),
+    dateOfBirth: getVal('cr-dob'),
     firstArrivalDateInCanada: getVal('cr-arrival'),
     streetName: getVal('cr-street'),
     unitNumber: getVal('cr-unit'),
@@ -3365,7 +3399,8 @@ function updateReviewPayloadPreview() {
     { label: 'First Arrival Date', target: 'firstarrivaldate', val: mapped.firstarrivaldate },
     { label: 'Marital Status', target: 'familystatuscode', val: mapped.familystatuscode },
     { label: 'Number of Children', target: 'numberofchildren', val: mapped.numberofchildren },
-    { label: 'Client Name', target: 'fullname', val: mapped.fullname }
+    { label: 'Client Name', target: 'fullname', val: mapped.fullname },
+    { label: 'Date of Birth', target: 'birthdate', val: mapped.birthdate }
   ];
 
   const tbody = document.getElementById('cr-mapping-tbody');
@@ -3396,6 +3431,7 @@ async function submitCaseworkerApproval() {
   const getVal = id => (document.getElementById(id)?.value || '').trim();
   const current = {
     fullName: getVal('cr-name'),
+    dateOfBirth: getVal('cr-dob'),
     firstArrivalDateInCanada: getVal('cr-arrival'),
     streetName: getVal('cr-street'),
     unitNumber: getVal('cr-unit'),
@@ -4386,10 +4422,6 @@ async function speakTextInLanguage(text, lang, voiceName) {
     try { return await speakWithGoogleTTS(text, lang); }
     catch (e) { console.warn('Google voice (' + lang + ') failed:', e.message); }
   }
-  if (s.speechKey && s.speechRegion) {
-    try { return await speakWithAzureSpeechVoice(text, lang, voiceName); }
-    catch (e) { console.warn('Azure Speech (' + lang + ') failed:', e.message); }
-  }
   // Fallback: browser voice for that language, if the browser has one.
   return new Promise(resolve => {
     if (!window.speechSynthesis) { resolve(); return; }
@@ -4403,25 +4435,16 @@ async function speakTextInLanguage(text, lang, voiceName) {
   });
 }
 
-// ─── speakText (priority: Avatar → Google Gemini voice → Azure Speech Neural → Browser) ───
+// ─── speakText (priority: Google Gemini voice → browser voice) ───
 async function speakText(text) {
   const s = loadSettings();
   stopCurrentAudio();
-
-  if (_avatarReady) {
-    try { return await speakWithAvatar(text); }
-    catch(e) { console.warn('Avatar speak failed:', e.message); }
-  }
 
   if (useGoogleVoice(s)) {
     try { return await speakWithGoogleTTS(text, 'en-US'); }
     catch(e) { console.warn('Google voice failed:', e.message); }
   }
 
-  if (s.speechKey && s.speechRegion) {
-    try { return await speakWithAzureSpeech(text); }
-    catch(e) { console.warn('Azure Speech Neural TTS failed:', e.message); }
-  }
 
   // Last-resort fallback. This is the robotic browser voice.
   return new Promise(resolve => {
@@ -4475,19 +4498,11 @@ function updateMicUI(on) {
 }
 
 function stopListening() {
-  if (typeof _convListenFinish === 'function') {
-    _convListenFinish();
-    return;
-  }
-
+  if (typeof _convListenFinish === 'function') return _convListenFinish();
   _isListening = false;
-  if (_sdkRecognizer) {
-    try { _sdkRecognizer.stopContinuousRecognitionAsync(); } catch(e) {}
-    try { _sdkRecognizer.close(); } catch(e) {}
-    _sdkRecognizer = null;
-  }
   updateMicUI(false);
   setAvatarListening(false);
+  return Promise.resolve();
 }
 
 // _convSttMeta accumulates merged STT metadata across follow-up listens
@@ -4687,311 +4702,110 @@ async function listenForConversationConfirmation(previousText = '') {
   });
 }
 
+// Client Intake recording with Gemini Live speech-to-text (js/gemini-live-stt.js).
+// Speak starts it; Stop ends it, waits briefly for the last sentence's
+// transcript and returns the whole answer. The text box fills in after each
+// sentence.
 async function listenForAnswer(previousText = '') {
-  const isConfirmationTurn =
-    isConversationConfirmationTurn();
-
-  // Client Intake recording is fully manual. Even confirmation turns use the
-  // continuous recognizer and end only when the user presses Stop.
-  const s = loadSettings();
-  if (!s.speechKey || !s.speechRegion) {
-    toast('Configure Azure Speech Key & Region in Settings → Azure Talking Avatar', 'error');
+  if (typeof GeminiLiveStt !== 'function') {
+    toast('Speech recognition is not available on this page.', 'error');
     return previousText;
   }
 
-  // The first attempt used to end too early while Chrome was still opening
-  // and authorizing the microphone. Warm it up before starting Azure STT.
-  await warmUpConversationMicrophone();
-
-  return new Promise((resolve) => {
-    let finished = false;
-    let hasSpeech = false;
-    let finalParts = [];
-    let latestPartial = '';
-    let latestMeta = null;
-    let silenceTimer = null;
-    let initialTimer = null;
-    let hardStopTimer = null;
-
+  return new Promise(resolve => {
     const textarea = document.getElementById('client-answer');
+    const parts = [];
+    const startedAt = Date.now();
+    let done = false;
+    let closing = null;
 
-    const visibleText = () => {
-      const current = [finalParts.join(' ').trim(), latestPartial.trim()]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
+    const visibleText = () =>
+      [String(previousText || '').trim(), parts.join(' ').trim()].filter(Boolean).join(' ');
 
-      return previousText
-        ? [previousText.trim(), current].filter(Boolean).join(' ')
-        : current;
-    };
-
-    const updateVisibleText = () => {
-      if (textarea) textarea.value = visibleText();
-    };
-
-    const cleanupRecognizer = () => {
-      clearTimeout(silenceTimer);
-      clearTimeout(initialTimer);
-      clearTimeout(hardStopTimer);
-
-      _isListening = false;
-      updateMicUI(false);
-      setAvatarListening(false);
-      _convListenFinish = null;
-
-      const recognizer = _sdkRecognizer;
-      _sdkRecognizer = null;
-
-      if (!recognizer) return;
-
-      try {
-        recognizer.stopContinuousRecognitionAsync(
-          () => {
-            try { recognizer.close(); } catch (_) {}
-          },
-          () => {
-            try { recognizer.close(); } catch (_) {}
-          }
-        );
-      } catch (_) {
-        try { recognizer.close(); } catch (_) {}
-      }
-    };
+    const interviewLanguage = typeof clientIntakeLanguage === 'function' ? clientIntakeLanguage() : 'en-US';
+    const stt = new GeminiLiveStt({
+      // The interview language plus English (clients mix in English words).
+      languageCodes: [interviewLanguage, 'en-US'],
+      onFinal: text => {
+        if (done) return;
+        parts.push(text);
+        if (textarea) textarea.value = visibleText();
+      },
+      onError: error => console.warn('[Conversation STT]', error)
+    });
 
     const finish = () => {
-      if (finished) return;
-      finished = true;
+      if (closing) return closing;
+      closing = (async () => {
+        try { await stt.flush(); } catch (_) {}
+        done = true;
+        stt.stop();
 
-      const captured = finalParts.join(' ').trim() || latestPartial.trim();
-      const combined = previousText
-        ? [previousText.trim(), captured].filter(Boolean).join(' ')
-        : captured;
+        _isListening = false;
+        updateMicUI(false);
+        setAvatarListening(false);
+        _convListenFinish = null;
 
-      cleanupRecognizer();
+        let captured = parts.join(' ').trim();
 
-      if (captured) {
-        _convFirstSuccessfulCaptureDone = true;
-        // Mark that the currently displayed question/follow-up has received a
-        // fresh spoken response. doAnalyze() uses this to reject stale/duplicate
-        // analysis calls, especially after Follow-up 3/3 is displayed.
-        if (typeof conv !== 'undefined') {
-          conv.answerReadyForCurrentPrompt = true;
+        // Gemini Live writes English words inside Persian speech in Persian
+        // letters; re-transcribe the recording so names, numbers and postal
+        // codes come out in Latin characters (js/gemini-transcribe.js).
+        if (captured && /[\u0600-\u06FF]/.test(captured) &&
+            typeof aaGeminiTranscribe === 'function' && typeof aaMicRingWav === 'function') {
+          const wav = aaMicRingWav(startedAt, Date.now());
+          const better = wav ? await aaGeminiTranscribe(wav, 7000, [interviewLanguage, 'en-US']) : null;
+          if (better?.transcript) captured = better.transcript;
         }
 
-        const meta = latestMeta || {
-          text: captured,
-          rawJson: null,
-          confidence: null,
-          lexical: '',
-          alternatives: []
-        };
+        const combined = previousText
+          ? [String(previousText).trim(), captured].filter(Boolean).join(' ')
+          : captured;
 
-        if (!_convSttMeta) {
-          _convSttMeta = { ...meta, text: combined };
-        } else {
-          _convSttMeta.text = combined;
-          _convSttMeta.lexical = [
-            _convSttMeta.lexical,
-            meta.lexical
-          ].filter(Boolean).join(' ');
-          _convSttMeta.alternatives = [...(meta.alternatives || [])];
-          _convSttMeta.confidence = meta.confidence != null
-            ? Math.min(_convSttMeta.confidence ?? 1, meta.confidence)
-            : _convSttMeta.confidence;
+        if (captured) {
+          _convFirstSuccessfulCaptureDone = true;
+          // The displayed question/follow-up received a fresh spoken response
+          // (doAnalyze() rejects stale or duplicate analysis calls without it).
+          if (typeof conv !== 'undefined') conv.answerReadyForCurrentPrompt = true;
+          _convSttMeta = { text: combined, rawJson: null, confidence: null, lexical: '', alternatives: [] };
         }
-      }
 
-      if (textarea) textarea.value = combined;
-      resolve(combined || previousText);
+        if (textarea) textarea.value = combined;
+        resolve(combined || previousText);
+      })();
+      return closing;
     };
-
-    const restartEndSilenceTimer = () => {};
 
     _convListenFinish = finish;
     _isListening = true;
     updateMicUI(true);
     setAvatarListening(true);
 
-    try {
-      const speechConfig =
-        SpeechSDK.SpeechConfig.fromSubscription(s.speechKey, s.speechRegion);
-
-      // Client Intake: recognize speech in the interview language chosen at the top.
-      speechConfig.speechRecognitionLanguage =
-        (typeof clientIntakeRecognitionLanguage === 'function')
-          ? clientIntakeRecognitionLanguage()
-          : 'en-US';
-
-      try {
-        speechConfig.outputFormat = SpeechSDK.OutputFormat.Detailed;
-      } catch (_) {}
-
-      try {
-        speechConfig.setProperty(
-          'SpeechServiceResponse_RequestDetailedResultTrueFalse',
-          'true'
-        );
-        speechConfig.setProperty(
-          'SpeechServiceConnection_InitialSilenceTimeoutMs',
-          '15000'
-        );
-        const isSpellingStep =
-          conv.workflowCtx?.state === WF_STATE.COLLECTING_SPELLING;
-
-        speechConfig.setProperty(
-          'Speech_SegmentationSilenceTimeoutMs',
-          isSpellingStep ? '7000' : '3000'
-        );
-      } catch (_) {}
-
-      const audioConfig =
-        SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-
-      _sdkRecognizer =
-        new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
-
-      // Bias Azure Speech toward the known demo name without forcing it.
-      _sdkRecognizer.recognizing = (_, event) => {
-        if (finished) return;
-
-        const partial = (event.result?.text || '').trim();
-        if (!partial) return;
-
-        hasSpeech = true;
-        latestPartial = partial;
-        updateVisibleText();
-        restartEndSilenceTimer();
-      };
-
-      _sdkRecognizer.recognized = (_, event) => {
-        if (finished) return;
-
-        if (
-          event.result.reason === SpeechSDK.ResultReason.RecognizedSpeech &&
-          event.result.text
-        ) {
-          const part = event.result.text.trim();
-
-          if (part) {
-            hasSpeech = true;
-            finalParts.push(part);
-            latestPartial = '';
-            latestMeta = parseSttDetail(event.result);
-            updateVisibleText();
-            restartEndSilenceTimer();
-          }
-        }
-      };
-
-      _sdkRecognizer.canceled = async (_, event) => {
-        const errorText =
-          String(event.errorDetails || '');
-
-        console.warn(
-          '[Conversation STT] canceled:',
-          event.reason,
-          errorText
-        );
-
-        const shouldRetryAsConfirmation =
-          errorText.includes('1007') &&
-          isConversationConfirmationTurn();
-
-        if (shouldRetryAsConfirmation) {
-          if (finished) return;
-          finished = true;
-
-          cleanupRecognizer();
-
-          console.warn(
-            '[Conversation STT] Retrying websocket 1007 with minimal confirmation recognizer'
-          );
-
-          await sleep(500);
-
-          const retryText =
-            await listenForConversationConfirmation(previousText);
-
-          if (textarea) textarea.value = retryText || previousText;
-          resolve(retryText || previousText);
-          return;
-        }
-
-        if (
-          event.reason === SpeechSDK.CancellationReason.Error &&
-          errorText
-        ) {
-          toast(
-            'Speech recognition error: ' +
-              errorText.slice(0, 120),
-            'error'
-          );
-        }
-
-        finish();
-      };
-
-      _sdkRecognizer.sessionStopped = () => {
-        if (!finished) finish();
-      };
-
-      _sdkRecognizer.startContinuousRecognitionAsync(
-        () => {
-          const isSpellingStep =
-            conv.workflowCtx?.state === WF_STATE.COLLECTING_SPELLING &&
-            !isConversationConfirmationTurn();
-
-          console.log(
-            '[Conversation STT] Continuous recognition started; profile:',
-            isSpellingStep
-              ? 'spelling — 7s end silence'
-              : (_convFirstSuccessfulCaptureDone
-                  ? 'normal — 3s end silence'
-                  : 'first capture — 5s end silence'),
-            {
-              state: conv.workflowCtx?.state,
-              confirmationDetected:
-                isConversationConfirmationTurn()
-            }
-          );
-
-        },
-        (err) => {
-          console.error('[Conversation STT] start error:', err);
-          toast(
-            'Speech recognition error: ' + String(err).slice(0, 120),
-            'error'
-          );
-          finish();
-        }
-      );
-    } catch (err) {
-      console.error('[Conversation STT] setup error:', err);
-      toast(
-        'Speech recognition error: ' + String(err).slice(0, 120),
-        'error'
-      );
+    stt.start().catch(error => {
+      console.error('[Conversation STT] start error:', error);
+      toast('Speech recognition error: ' + String(error.message || error).slice(0, 120), 'error');
       finish();
-    }
+    });
   });
 }
 
 async function toggleListen() {
   if (_isListening) {
-    // Recording ends only when the user explicitly presses Stop.
-    stopListening();
+    // Recording ends only when the user explicitly presses Stop. Wait for the
+    // last sentence's transcript, then analyze automatically.
+    const status = typeof setClientIntakeAnalyzing === 'function' ? setClientIntakeAnalyzing : null;
+    if (status) status('Finishing the transcript…');
+    try {
+      await stopListening();
+    } finally {
+      if (status) status('');
+    }
 
-    // finish() updates the read-only answer field synchronously. Defer analysis
-    // one tick so the recognition cleanup/UI state can settle first.
-    setTimeout(() => {
-      const answer = (document.getElementById('client-answer')?.value || '').trim();
-      const analyzeBtn = document.getElementById('btn-analyze');
-
-      if (answer && analyzeBtn && !analyzeBtn.disabled) {
-        doAnalyze();
-      }
-    }, 0);
+    const answer = (document.getElementById('client-answer')?.value || '').trim();
+    const busy = typeof _clientIntakeAnalyzing !== 'undefined' && _clientIntakeAnalyzing;
+    if (answer && !busy && typeof doAnalyze === 'function') {
+      doAnalyze();
+    }
     return;
   }
 
@@ -5054,8 +4868,9 @@ el.innerHTML = `
         style="display:none;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:6px;padding:9px 11px;margin-bottom:10px;font-size:13px"></div>
       <label id="client-answer-label" style="margin-bottom:8px;display:block;font-weight:600">Client's Answer</label>
       <textarea id="client-answer" dir="auto" readonly aria-readonly="true" placeholder="The client's spoken answer will appear here…" style="min-height:90px;background:#f8fafc;cursor:default"></textarea>
-      <div class="row mt-12">
-        <button id="btn-analyze" class="btn btn-primary" onclick="doAnalyze()">🔍 Analyze Answer</button>
+      <!-- Shown only while the answer is checked/analyzed (starts automatically after Stop). -->
+      <div id="conv-analyze-status" class="conv-analyze-status" role="status" aria-live="polite" style="display:none">
+        <span class="spinner"></span><span id="conv-analyze-status-text">Analyzing…</span>
       </div>
     </div>
 
@@ -7052,9 +6867,10 @@ const _aa = {
   loopToken: 0
 };
 
+// The caseworker avatar is always called Lisa (the Gemini avatar setting only
+// chooses the face).
 function aaAvatarDisplayName() {
-  const s = loadSettings();
-  return s.avatarProvider === 'gemini' ? (s.geminiAvatarName || 'Kira') : 'Lisa';
+  return 'Lisa';
 }
 
 function aaSetStatus(state, detail = '') {

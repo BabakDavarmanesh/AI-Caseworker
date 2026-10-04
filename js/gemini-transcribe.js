@@ -96,7 +96,8 @@ const AA_TRANSCRIBE_PROMPT =
   'Return JSON: {"transcript": string, "language": "fa-IR" | "en-US" | "fr-CA" | "mixed"}';
 
 // Returns { transcript, language } from Gemini, or null on any failure.
-async function aaGeminiTranscribe(wavBase64, timeoutMs = 7000) {
+// languageCodes: the interview languages, e.g. ['fa-IR', 'en-US'] (a hint only).
+async function aaGeminiTranscribe(wavBase64, timeoutMs = 7000, languageCodes = []) {
   const s = loadSettings();
   if (!s.gcpProjectId || !wavBase64) return null;
   const model = (s.geminiModel || 'gemini-3.8-flash').trim();
@@ -117,7 +118,9 @@ async function aaGeminiTranscribe(wavBase64, timeoutMs = 7000) {
         model,
         credentialsFile: s.gcpCredentialsFile || 'google-service-account.json',
         request: {
-          contents: [{ role: 'user', parts: [{ text: AA_TRANSCRIBE_PROMPT }, { inlineData: { mimeType: 'audio/wav', data: wavBase64 } }] }],
+          contents: [{ role: 'user', parts: [{ text: AA_TRANSCRIBE_PROMPT + (languageCodes.length
+            ? ` The interview languages are: ${languageCodes.join(', ')}. The speaker uses these languages; do not transcribe into any other language.`
+            : '') }, { inlineData: { mimeType: 'audio/wav', data: wavBase64 } }] }],
           generationConfig
         }
       })

@@ -31,6 +31,17 @@ let conv = {
 const CLIENT_INTAKE_MAX_FOLLOWUPS = 3;
 let _clientIntakeFollowUpToken = 0;
 let _clientIntakePromptPlaying = false;
+let _clientIntakeAnalyzing = false;
+
+// Analysis starts automatically when the caseworker presses Stop; this status
+// line replaces the old "Analyze Answer" button. Pass '' to hide it.
+function setClientIntakeAnalyzing(label) {
+  _clientIntakeAnalyzing = !!label;
+  const el = document.getElementById('conv-analyze-status');
+  const text = document.getElementById('conv-analyze-status-text');
+  if (text && label) text.textContent = label;
+  if (el) el.style.display = label ? 'flex' : 'none';
+}
 
 // ─────────────────────────────────────────────────────────────
 // INTERVIEW LANGUAGE (Client Intake)
@@ -528,11 +539,6 @@ function renderConversationWorkflowResult(q, ctx, latestAnswer, nextPrompt, done
     saveBtn.disabled = true;
   }
 
-  const analyzeBtn = document.getElementById('btn-analyze');
-  if (analyzeBtn) {
-    analyzeBtn.innerHTML = '🔍 Analyze Answer';
-    analyzeBtn.style.display = done ? 'none' : 'inline-flex';
-  }
 
   const answerLabel = document.getElementById('client-answer-label');
   if (answerLabel) {
@@ -609,6 +615,7 @@ function saveConfirmedConversationWorkflowAndAdvance(q, ctx) {
 }
 
 async function doAnalyze() {
+  if (_clientIntakeAnalyzing) return;
   // Stop any previous prompt before analyzing a new response.
   stopCurrentAudio();
 
@@ -632,14 +639,13 @@ async function doAnalyze() {
   // analyzed, not saved, and do NOT consume a follow-up. Fail-open on error.
   conv.guardrailNotice = '';
   if (typeof checkGuardrail === 'function') {
-    const gBtn = document.getElementById('btn-analyze');
     const gQ = conv.questions[conv.index];
-    if (gBtn) { gBtn.disabled = true; gBtn.innerHTML = '<span class="spinner"></span> Checking…'; }
+    setClientIntakeAnalyzing('Checking the answer…');
     let guardrail = null;
     try {
       guardrail = await checkGuardrail(answer, gQ?.question, clientIntakeLanguage());
     } finally {
-      if (gBtn) { gBtn.disabled = false; gBtn.innerHTML = '🔍 Analyze Answer'; }
+      setClientIntakeAnalyzing('');
     }
     if (guardrail && guardrail.triggered) {
       clientIntakeShowGuardrail(answer, guardrail);
@@ -658,9 +664,7 @@ async function doAnalyze() {
   conv.answerReadyForCurrentPrompt = false;
 
   const q = conv.questions[conv.index];
-  const btn = document.getElementById('btn-analyze');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Analyzing…';
+  setClientIntakeAnalyzing('Analyzing the answer…');
 
   resetConversationAnalysisUi();
 
@@ -785,11 +789,7 @@ async function doAnalyze() {
   } catch (err) {
     toast('Analysis failed: ' + err.message.substring(0, 120), 'error');
   } finally {
-    btn.disabled = false;
-
-    if (!conversationQuestionNeedsWorkflow(q)) {
-      btn.innerHTML = '🔍 Analyze Answer';
-    }
+    setClientIntakeAnalyzing('');
   }
 }
 
