@@ -1,7 +1,0 @@
-Version 14 - Final follow-up wait fix
-
-- The third follow-up no longer causes the intake to advance merely because it was displayed.
-- Each follow-up now requires a fresh client speech response before analysis is accepted.
-- Separate counters track follow-ups displayed and follow-up answers actually received.
-- Duplicate/stale Analyze calls cannot consume Follow-up 3/3.
-- After the client answers Follow-up 3/3, the answer is analyzed; only then can the item be flagged for review and advanced if still incomplete.

@@ -1,6 +1,0 @@
-Version 9 — Client Intake UX changes
-
-- Pressing Stop while recording now finalizes the transcript and automatically starts Analyze Answer.
-- Removed the Skip button from Client Intake.
-- Client's Answer is now read-only; speech recognition can populate it, but it cannot be manually edited.
-- Analyze Answer remains available as a manual fallback/re-run control.

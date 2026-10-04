@@ -1,8 +1,0 @@
-VERSION 28 - Flow bar removed, travelling dot kept
-
-- Removed the "Source Questions -> AI Translation Engine -> Target Languages" bar
-  from translation.html.
-- The glowing dot is kept: it now starts at the tip of the spotlight progress bar
-  (or the spotlight flag at the very start) and travels to the language card each
-  time a question finishes.
-- Summary bar spacing adjusted. No other behavior changed.

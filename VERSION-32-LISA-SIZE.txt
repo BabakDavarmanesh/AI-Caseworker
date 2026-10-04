@@ -1,9 +1,0 @@
-VERSION 32 - Larger Lisa video
-
-- The Azure avatar stream is landscape (1920x1080) with Lisa in the middle, but the panel
-  is portrait. With object-fit:contain the whole wide frame was shrunk to the panel width,
-  so Lisa looked tiny with empty space above and below.
-- The video now uses object-fit:cover (centered): it fills the panel height and only the
-  empty white sides of the frame are cropped. Lisa appears ~2.5x larger.
-- Display only (js/virtual-caseworker.js, video style). The avatar connection, voice and
-  stream settings are unchanged.

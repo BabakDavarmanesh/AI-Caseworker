@@ -1,9 +1,0 @@
-VERSION 20 - Pipeline live status line (Question Engine)
-
-- Technical log box is hidden by default. Add ?debug to the question-engine.html URL to show it.
-- One centered, typewriter-style status line sits under the 4-step pipeline.
-- The message is driven by real events in runPipeline(): upload -> extract -> analyze -> save -> done.
-- Slow steps keep the same message, add soft animated dots and a gentle periodic ring pulse.
-- No sound. Respects prefers-reduced-motion.
-- Files changed: question-engine.html, css/app.css, js/app.js
-- Processing, Azure calls, extraction and Question Bank logic are unchanged.
